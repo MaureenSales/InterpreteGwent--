@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.002.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InterpreteGwent++", "InterpreteGwent++.csproj", "{4FF4ACDB-5915-4A71-B01D-DCF40A9FEA57}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4FF4ACDB-5915-4A71-B01D-DCF40A9FEA57}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4FF4ACDB-5915-4A71-B01D-DCF40A9FEA57}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4FF4ACDB-5915-4A71-B01D-DCF40A9FEA57}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4FF4ACDB-5915-4A71-B01D-DCF40A9FEA57}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {BC4629AA-1B2A-40B9-B5EC-EF746F1E64C3}
+	EndGlobalSection
+EndGlobal
