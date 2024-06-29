@@ -156,7 +156,7 @@ namespace Interprete
                 ASTnode right = UnaryExpr();
                 return new UnaryOp(op, right);
             }
-    
+
             if (Match(TokenType.Increment, TokenType.Decrement, TokenType.Subtraction))
             {
                 Token op = Advance();
@@ -168,7 +168,7 @@ namespace Interprete
 
         private ASTnode UnaryInverse()
         {
-            ASTnode left = Indexer();
+            ASTnode left = Call();
             if (Match(TokenType.Increment, TokenType.Decrement))
             {
                 Token op = Advance();
@@ -177,51 +177,34 @@ namespace Interprete
             return left;
         }
 
-        private ASTnode Indexer()
-        {
-            ASTnode left = Call();
-            if(Match(TokenType.OpCurlyBracket))
-            {
-                position++;
-                ASTnode index = Assignment();
-                Consume(ErrorExceptions.ErrorType.SINTACTIC, TokenType.ClCurlyBracket, "']' is expected after indexer");
-                left = new IndexList(left, index);
-            }
-
-            return left;
-        }
-
         private ASTnode Call()
         {
-            if(Match(TokenType.Identifier))
+            if (Match(TokenType.Identifier))
             {
-                return PropertyOrCallMethod();
+                switch (PeekNext().Type)
+                {
+                    case TokenType.Dot:
+                        return Property(new VariableReference(Advance()));
+                    case TokenType.OpParenthesis:
+                        return CallMethod(Advance());
+                    case TokenType.OpCurlyBracket:
+                        return Indexer(new VariableReference(Advance()));
+                    default: return new VariableReference(Advance());
+                }
             }
             return PrimaryExpr();
         }
-        
-        private ASTnode PropertyOrCallMethod()
+        private ASTnode Indexer(ASTnode node)
         {
-            ASTnode object_;
-
-            if (PeekNext().Type == TokenType.OpParenthesis)
-            {
-                object_ = CallMethod(Advance());
-            }
-            else object_ = new VariableReference(Advance());
-
-            while (Match(TokenType.Dot))
-            {
-                position++;
-                if (Match(TokenType.Identifier, TokenType.Power, TokenType.Faction, TokenType.Name))
-                {
-                    ASTnode property = PropertyOrCallMethod();
-                    object_ = new Property(object_, property);
-                }
-                else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SINTACTIC, "An indentifier or method is expected", Current.Line, Current.Col);
-            }
-            return object_;
+            ASTnode left = node;
+            position++;
+            ASTnode index = Assignment();
+            Consume(ErrorExceptions.ErrorType.SINTACTIC, TokenType.ClCurlyBracket, "']' is expected after indexer");
+            left = new IndexList(left, index);
+            if (Match(TokenType.Dot)) return Property(left);
+            return left;
         }
+
         private ASTnode CallMethod(Token id)
         {
             Token methodName = id;
@@ -238,10 +221,38 @@ namespace Interprete
                     arguments.Add(Assignment());
                 }
             }
-
             Consume(ErrorExceptions.ErrorType.SINTACTIC, TokenType.ClParenthesis, "')' is expected after arguments");
-            return new CallMethod(methodName, arguments);
+            ASTnode method = new CallMethod(methodName, arguments);
+            if (Match(TokenType.Dot)) return Property(method);
+            if (Match(TokenType.OpCurlyBracket)) return Indexer(method);
+            return method;
         }
+
+
+        private ASTnode Property(ASTnode node)
+        {
+            ASTnode left = node;
+
+            while (Match(TokenType.Dot))
+            {
+                position++;
+                if (Match(TokenType.Power, TokenType.Faction, TokenType.Name))
+                {
+                    ASTnode property = new VariableReference(Advance());
+                    left = new Property(left, property);
+                }
+                else if(Match(TokenType.Identifier))
+                {
+                    ASTnode property = Call();
+                    left = new Property(left, property);
+                }
+                else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SINTACTIC, "An indentifier, method or indexer is expected", Current.Line, Current.Col);
+            }
+            
+            return left;
+        }
+
+
 
         private ASTnode PrimaryExpr()
         {
@@ -343,11 +354,11 @@ namespace Interprete
         {
             List<ASTnode> exprs = new List<ASTnode>();
             position++;
-            do
+            while (!Match(TokenType.ClBraces))
             {
                 exprs.Add(Assignment());
                 Consume(ErrorExceptions.ErrorType.SINTACTIC, TokenType.Semicolon, "';' is expected after expresion in expressions block");
-            } while (!Match(TokenType.ClBraces));
+            }
             position++;
             return exprs;
         }

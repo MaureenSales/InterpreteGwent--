@@ -15,7 +15,7 @@ internal class Program
         string Root = "/home/maureensb/Documentos/InterpreteGwent++/Source.txt";
         System.Console.WriteLine(Root);
         string input = "";
-        
+
         input = File.ReadAllText(Root);
 
         Console.ForegroundColor = ConsoleColor.DarkCyan;
@@ -38,7 +38,7 @@ internal class Program
 
             Parser parser = new Parser(lexer);
             PrintASTnode printer = new PrintASTnode();
-            
+
             foreach (var stm in parser.Statements)
             {
                 System.Console.WriteLine(printer.Print(stm));
@@ -60,5 +60,5 @@ internal class Program
         }
     }
 
-    
+
 }
