@@ -1,16 +1,17 @@
-namespace Interprete
-{
-    public abstract class BinOp : ASTnode
-    {
-        public ASTnode Left { get; private set; }
-        public Token Op { get; private set; }
-        public ASTnode Right { get; private set;}
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 
-        public BinOp(ASTnode left, Token op,  ASTnode right)
-        {
-            Left = left;
-            Right = right;
-            Op = op;
-        }
+public abstract class BinOp : ASTnode
+{
+    public ASTnode Left { get; private set; }
+    public Token Op { get; private set; }
+    public ASTnode Right { get; private set; }
+
+    public BinOp(ASTnode left, Token op, ASTnode right)
+    {
+        Left = left;
+        Right = right;
+        Op = op;
     }
 }

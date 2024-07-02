@@ -1,16 +1,17 @@
-namespace Interprete
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class Number : ASTnode
 {
-    public class Number: ASTnode
+    public Token Num { get; private set; }
+    public double Value { get; private set; }
+
+    public Number(Token num)
     {
-        public Token Num { get; private set; }
-        public double Value { get; private set; }
-
-        public Number(Token num)
-        {
-            Num = num;
-            Value = double.Parse(Num.Lexeme);
-        }
-
-        public override T Accept<T>(IVsitor<T> visitor) => visitor.Visit(this);
+        Num = num;
+        Value = double.Parse(Num.Lexeme);
     }
+
+    public override T Accept<T>(IVsitor<T> visitor) => visitor.Visit(this);
 }

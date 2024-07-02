@@ -1,5 +1,7 @@
-namespace Interprete
-{
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
     public class Boolean : ASTnode
     {
         public Token Bool { get; private set; }
@@ -14,4 +16,3 @@ namespace Interprete
 
         public override T Accept<T>(IVsitor<T> visitor) => visitor.Visit(this);
     }
-}

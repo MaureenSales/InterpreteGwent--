@@ -1,17 +1,18 @@
-using System.Text.RegularExpressions;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 
-namespace Interprete
+public class TokenTypeExtensions : MonoBehaviour
 {
-    public static class TokenTypeExtensions
-    {
-        public readonly static Dictionary<TokenType, string> TokenPatterns;
-        public static readonly Dictionary<string, TokenType> KeywordsValues;
-        public static readonly List<string> Properties;
-        public static readonly List<string> Methods;
+    // Start is called before the first frame update
+    public readonly static Dictionary<TokenType, string> TokenPatterns;
+    public static readonly Dictionary<string, TokenType> KeywordsValues;
+    public static readonly List<string> Properties;
+    public static readonly List<string> Methods;
 
-        static TokenTypeExtensions()
-        {
-            TokenPatterns = new Dictionary<TokenType, string>
+    static TokenTypeExtensions()
+    {
+        TokenPatterns = new Dictionary<TokenType, string>
             {
                 {TokenType.Identifier, @"^[a-zA-Z_][a-zA-Z0-9_]*"},
                 {TokenType.Number, @"^\d+(\.\d+)?"},
@@ -54,7 +55,7 @@ namespace Interprete
                 {TokenType.Disjunction, @"^\|\|"},
 
             };
-            KeywordsValues = new Dictionary<string, TokenType>
+        KeywordsValues = new Dictionary<string, TokenType>
             {
                 {"Name", TokenType.Name},
                 {"card", TokenType.Card},
@@ -83,66 +84,65 @@ namespace Interprete
                 {"String", TokenType.TypeString},
 
             };
-            
-           Properties = new List<string>()
+
+        Properties = new List<string>()
            {
                 "Power",
                 "Faction",
                 "Type",
                 "Name",
-                "TriggerPlayer", 
+                "TriggerPlayer",
                 "Board",
                 "Hand",
-                "Deck", 
-                "Field", 
-                "Graveyard", 
+                "Deck",
+                "Field",
+                "Graveyard",
                 "Owner",
 
            };
 
-           Methods = new List<string>()
+        Methods = new List<string>()
            {
-                "Pop", 
-                "Add", 
-                "Shuffle", 
-                "DeckOfPlayer", 
-                "HandOfPlayer", 
-                "FieldOfPlayer", 
-                "GraveyardOfPlayer", 
-                "Push", 
-                "Remove", 
-                "Find", 
+                "Pop",
+                "Add",
+                "Shuffle",
+                "DeckOfPlayer",
+                "HandOfPlayer",
+                "FieldOfPlayer",
+                "GraveyardOfPlayer",
+                "Push",
+                "Remove",
+                "Find",
                 "SendBottom",
            };
-        }
-
     }
 
-    public enum TokenType
-    {
-        //opertors
+}
 
-        //booleans
-        Equality, NotEqual, LessThan, GreaterThan, LessOrEqual, GreaterOrEqual, Negation, Imply,
-        Conjunction, Disjunction,
+public enum TokenType
+{
+    //opertors
 
-        //aritmetics
-        Sum, Subtraction, Product, Modulo, Division, Pow, Assignment, Concat, ConcatWithSpace, Increment, Decrement, SumAssignment, 
-        MinusAssignment, DivisionAssignment, ProductAssignment, ModuloAssignment,
+    //booleans
+    Equality, NotEqual, LessThan, GreaterThan, LessOrEqual, GreaterOrEqual, Negation, Imply,
+    Conjunction, Disjunction,
 
-        //keywords
-        Name, Params, Action, Bool, Targets, Context, Type, Faction, Power, Range, Card, Find,
-        OnActivation, Effect, effect, Selector, Source, Single, True, False, Predicate, PostAction, For, While, Amount, In, TypeNumber, TypeString,
+    //aritmetics
+    Sum, Subtraction, Product, Modulo, Division, Pow, Assignment, Concat, ConcatWithSpace, Increment, Decrement, SumAssignment,
+    MinusAssignment, DivisionAssignment, ProductAssignment, ModuloAssignment,
 
-        //constants
-        PI, Euler,
+    //keywords
+    Name, Params, Action, Bool, Targets, Context, Type, Faction, Power, Range, Card, Find,
+    OnActivation, Effect, effect, Selector, Source, Single, True, False, Predicate, PostAction, For, While, Amount, In, TypeNumber, TypeString,
 
-        //literals
-        String, Number,
+    //constants
+    PI, Euler,
 
-        //symbols
-        OpParenthesis, ClParenthesis, OpCurlyBracket, ClCurlyBracket, OpBraces, ClBraces, Comma, Semicolon, Colon, Dot, Identifier,
-        
-        EOF,
-    }
+    //literals
+    String, Number,
+
+    //symbols
+    OpParenthesis, ClParenthesis, OpCurlyBracket, ClCurlyBracket, OpBraces, ClBraces, Comma, Semicolon, Colon, Dot, Identifier,
+
+    EOF,
 }

@@ -1,15 +1,16 @@
-namespace Interprete
-{
-    public class Property : ASTnode
-    {
-        public ASTnode Object { get; private set; }
-        public ASTnode PropertyAccess { get; private set; }
-        public Property(ASTnode object_, ASTnode property)
-        {
-            Object = object_;
-            PropertyAccess = property;
-        }
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 
-        public override T Accept<T>(IVsitor<T> visitor) => visitor.Visit(this);
+public class Property : ASTnode
+{
+    public ASTnode Object { get; private set; }
+    public ASTnode PropertyAccess { get; private set; }
+    public Property(ASTnode object_, ASTnode property)
+    {
+        Object = object_;
+        PropertyAccess = property;
     }
+
+    public override T Accept<T>(IVsitor<T> visitor) => visitor.Visit(this);
 }

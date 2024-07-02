@@ -1,15 +1,17 @@
-namespace Interprete
-{
-    public class Assignment : ASTnode
-    {
-        public ASTnode Variable { get; private set; }
-        public ASTnode? Value { get; private set; }
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+#nullable enable
 
-        public Assignment(ASTnode variable, ASTnode? value)
-        {
-            Variable = variable;
-            Value = value;
-        }
-        public override T Accept<T>(IVsitor<T> visitor) => visitor.Visit(this);
+public class Assignment : ASTnode
+{
+    public ASTnode Variable { get; private set; }
+    public ASTnode? Value { get; private set; }
+
+    public Assignment(ASTnode variable, ASTnode? value)
+    {
+        Variable = variable;
+        Value = value;
     }
+    public override T Accept<T>(IVsitor<T> visitor) => visitor.Visit(this);
 }
