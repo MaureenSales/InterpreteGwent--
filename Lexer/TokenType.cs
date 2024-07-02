@@ -78,6 +78,7 @@ namespace Interprete
                 {"for", TokenType.For},
                 {"while", TokenType.While},
                 {"in", TokenType.In},
+                {"Find", TokenType.Find},
                 {"Number", TokenType.TypeNumber},
                 {"String", TokenType.TypeString},
 
@@ -130,7 +131,7 @@ namespace Interprete
         MinusAssignment, DivisionAssignment, ProductAssignment, ModuloAssignment,
 
         //keywords
-        Name, Params, Action, Bool, Targets, Context, Type, Faction, Power, Range, Card,
+        Name, Params, Action, Bool, Targets, Context, Type, Faction, Power, Range, Card, Find,
         OnActivation, Effect, effect, Selector, Source, Single, True, False, Predicate, PostAction, For, While, Amount, In, TypeNumber, TypeString,
 
         //constants

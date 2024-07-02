@@ -4,37 +4,37 @@ namespace Interprete
     {
         public string Visit(UnaryOp unaryOp)
         {
-            return $"({unaryOp.Op.Lexeme} {Print(unaryOp.Right)}) UnaryOp";
+            return $"({unaryOp.Op.Lexeme} {Print(unaryOp.Right)})";
         }
 
         public string Visit(Number number)
         {
-            return $"({number.Value}) Number";
+            return $"({number.Value})";
         }
 
         public string Visit(String @string)
         {
-            return $"({@string.Value}) String";
+            return $"({@string.Value})";
         }
 
         public string Visit(Boolean boolean)
         {
-            return $"({boolean.Value}) Boolean";
+            return $"({boolean.Value})";
         }
 
         public string Visit(LogicalBinOp logicalBinOp)
         {
-            return $"({Print(logicalBinOp.Left)} {logicalBinOp.Op.Lexeme} {Print(logicalBinOp.Right)}) LogicalBinOp";
+            return $"({Print(logicalBinOp.Left)} {logicalBinOp.Op.Lexeme} {Print(logicalBinOp.Right)})";
         }
 
         public string Visit(ArithmeticBinOp arithmeticBinOp)
         {
-            return $"({Print(arithmeticBinOp.Left)} {arithmeticBinOp.Op.Lexeme} {Print(arithmeticBinOp.Right)}) ArithmeticBinOp";
+            return $"({Print(arithmeticBinOp.Left)} {arithmeticBinOp.Op.Lexeme} {Print(arithmeticBinOp.Right)})";
         }
 
         public string Visit(GroupedExpr groupedExpr)
         {
-            return $"({Print(groupedExpr.Group)}) GroupedExpr";
+            return $"({Print(groupedExpr.Group)})";
         }
 
         public string Print(ASTnode node)
@@ -44,27 +44,27 @@ namespace Interprete
 
         public string Visit(ComparisonBinOp comparisonBinOp)
         {
-            return $"({Print(comparisonBinOp.Left)} {comparisonBinOp.Op.Lexeme} {Print(comparisonBinOp.Right)}) ComparisonBinOp";
+            return $"({Print(comparisonBinOp.Left)} {comparisonBinOp.Op.Lexeme} {Print(comparisonBinOp.Right)})";
         }
 
         public string Visit(ConcatBinOp concatBinOp)
         {
-            return $"({Print(concatBinOp.Left)} {concatBinOp.Op.Lexeme} {Print(concatBinOp.Right)}) ConcatBinOp";
+            return $"({Print(concatBinOp.Left)} {concatBinOp.Op.Lexeme} {Print(concatBinOp.Right)})";
         }
 
         public string Visit(VariableReference variableReference)
         {
-            return $"({variableReference.Name}) VariableReference";
+            return $"{variableReference.Name}";
         }
 
         public string Visit(Assignment assignment)
         {
-            return $"({Print(assignment.Variable)} = {Print(assignment.Value!)}) Assignment";
+            return $"({Print(assignment.Variable)} = {Print(assignment.Value!)})";
         }
 
         public string Visit(Property property)
         {
-            return $"({Print(property.Object)}.{Print(property.PropertyAccess)}) Property";
+            return $"({Print(property.Object)}.{Print(property.PropertyAccess)})";
         }
 
         public string Visit(CallMethod callMethod)
@@ -78,13 +78,13 @@ namespace Interprete
                 result += Print(item) + " ";
                 count++;
             }
-            return $"({result})) CallMethod";
+            return $"{result})";
             
         }
 
         public string Visit(UnaryInverseOp unaryInverseOp)
         {
-            return $"({Print(unaryInverseOp.Left)} {unaryInverseOp.Op.Lexeme}) UnaryInverseOp";
+            return $"({Print(unaryInverseOp.Left)} {unaryInverseOp.Op.Lexeme})";
         }
 
         public string Visit(PredicateLambda predicateLambda)
@@ -94,7 +94,7 @@ namespace Interprete
 
         public string Visit(ArithmeticAssignment arithmeticAssignment)
         {
-            return $"({Print(arithmeticAssignment.Variable)} {arithmeticAssignment.Op.Lexeme} {Print(arithmeticAssignment.Value)}) ArithmeticAssignment";
+            return $"({Print(arithmeticAssignment.Variable)} {arithmeticAssignment.Op.Lexeme} {Print(arithmeticAssignment.Value)})";
         }
 
         public string Visit(While @while)
@@ -164,7 +164,7 @@ namespace Interprete
 
         public string Visit(AssignmentWithType assignmentWithType)
         {
-            return $"({assignmentWithType.TypeVar.Lexeme}: {Print(assignmentWithType.Variable)}) AssignmentType";
+            return $"({assignmentWithType.TypeVar.Lexeme}: {Print(assignmentWithType.Variable)})";
         }
 
         public string Visit(Selector selector)
@@ -205,7 +205,7 @@ namespace Interprete
 
         public string Visit(IndexList indexList)
         {
-            return $"( {Print(indexList.List)} [{Print(indexList.Index)}] ) IndexList";
+            return $"{Print(indexList.List)} [{Print(indexList.Index)}]";
         }
     }
 }

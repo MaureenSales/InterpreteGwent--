@@ -42,7 +42,7 @@ namespace Interprete
                 }
             }
 
-            throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "Only cards or effects can be declared", Current.Line, Current.Col);
+            throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SINTACTIC, "Only cards or effects can be declared", Current.Line, Current.Col);
 
         }
 
@@ -330,8 +330,8 @@ namespace Interprete
                             switch (i)
                             {
                                 case 0:
-                                case 3: 
-                                EffectInstance(ref name!, ref parameters); fields[0] = 1; break;
+                                case 3:
+                                    EffectInstance(ref name!, ref parameters); fields[0] = 1; break;
                                 case 1: selector = SelectorField(); fields[1] = 1; break;
                                 case 2:
                                     position++;
@@ -389,8 +389,8 @@ namespace Interprete
             }
 
             if (!sugar) Consume(ErrorExceptions.ErrorType.SINTACTIC, TokenType.ClBraces, "'}' is expected after declaration of the Effect field");
-           
-            if(!sugar || !Match(TokenType.ClBraces)) Consume(ErrorExceptions.ErrorType.SINTACTIC, TokenType.Comma, "',' is expected after declaration of the Effect field");
+
+            if (!sugar || !Match(TokenType.ClBraces)) Consume(ErrorExceptions.ErrorType.SINTACTIC, TokenType.Comma, "',' is expected after declaration of the Effect field");
         }
 
         private (VariableReference, ASTnode) Arguments()
@@ -630,18 +630,27 @@ namespace Interprete
 
         private ASTnode Call()
         {
-            if (Match(TokenType.Identifier))
+            ASTnode left;
+            if (Match(TokenType.Identifier, TokenType.Find))
             {
                 switch (PeekNext().Type)
                 {
                     case TokenType.Dot:
-                        return Property(new VariableReference(Advance()));
+                        left = Property(new VariableReference(Advance()));
+                        break;
                     case TokenType.OpParenthesis:
-                        return CallMethod(Advance());
+                        left = CallMethod(Advance());
+                        break;
                     case TokenType.OpCurlyBracket:
-                        return Indexer(new VariableReference(Advance()));
-                    default: return new VariableReference(Advance());
+                        left = Indexer(new VariableReference(Advance()));
+                        break;
+                    default: left = new VariableReference(Advance());
+                    break;
                 }
+                if(Match(TokenType.Dot)) left = Property(left);
+                else if(Match(TokenType.OpCurlyBracket)) left = Indexer(left);
+                return left;
+
             }
             return PrimaryExpr();
         }
@@ -652,7 +661,6 @@ namespace Interprete
             ASTnode index = Assignment();
             Consume(ErrorExceptions.ErrorType.SINTACTIC, TokenType.ClCurlyBracket, "']' is expected after indexer");
             left = new IndexList(left, index);
-            if (Match(TokenType.Dot)) return Property(left);
             return left;
         }
 
@@ -663,19 +671,24 @@ namespace Interprete
             List<ASTnode> arguments = new List<ASTnode>();
             if (Current.Type != TokenType.ClParenthesis && !IsAtEnd)
             {
-                arguments.Add(Assignment());
-
-                while (Current.Type == TokenType.Comma)
+                if (methodName.Type == TokenType.Find)
                 {
-                    position++;
-                    //puede ser predicate
+                    if (!Match(TokenType.OpParenthesis)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SINTACTIC, "An predicate expresion is expected in the declaration of the method Find", Current.Line, Current.Col);
+                    arguments.Add(PredicateLambda());
+                }
+                else
+                {
                     arguments.Add(Assignment());
+
+                    while (Current.Type == TokenType.Comma)
+                    {
+                        position++;
+                        arguments.Add(Assignment());
+                    }
                 }
             }
             Consume(ErrorExceptions.ErrorType.SINTACTIC, TokenType.ClParenthesis, "')' is expected after arguments");
             ASTnode method = new CallMethod(methodName, arguments);
-            if (Match(TokenType.Dot)) return Property(method);
-            if (Match(TokenType.OpCurlyBracket)) return Indexer(method);
             return method;
         }
 
@@ -686,15 +699,26 @@ namespace Interprete
             while (Match(TokenType.Dot))
             {
                 position++;
-                if (Match(TokenType.Power, TokenType.Faction, TokenType.Name))
+                if (Match(TokenType.Power, TokenType.Faction, TokenType.Name, TokenType.Type))
                 {
-                    ASTnode property = new VariableReference(Advance());
-                    left = new Property(left, property);
+                    left = new Property(left, new VariableReference(Advance()));
                 }
-                else if (Match(TokenType.Identifier))
+                else if (Match(TokenType.Identifier, TokenType.Find))
                 {
-                    ASTnode property = Call();
-                    left = new Property(left, property);
+                    switch (PeekNext().Type)
+                    {
+                        case TokenType.Dot:
+                            left =  new Property(left, new VariableReference(Advance()));
+                            break;
+                        case TokenType.OpParenthesis:
+                            left =  new Property(left, CallMethod(Advance()));
+                            break;
+                        case TokenType.OpCurlyBracket:
+                            left = new Property(left, Indexer(new VariableReference(Advance())));
+                            break;
+                        default: left =  new VariableReference(Advance());
+                        break;
+                    }
                 }
                 else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SINTACTIC, "An indentifier, method or indexer is expected", Current.Line, Current.Col);
             }

@@ -62,6 +62,4 @@ internal class Program
             Console.ForegroundColor = ConsoleColor.White;
         }
     }
-
-
 }

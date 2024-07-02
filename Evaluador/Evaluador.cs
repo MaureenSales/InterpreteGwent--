@@ -43,7 +43,7 @@ namespace Interprete
                 case TokenType.Increment:
                 case TokenType.Decrement:
                     bool find = false;
-                    if(expr.Right.GetType() != typeof(Property) && expr.Right.GetType() != typeof(VariableReference) || expr.Right.GetType() != typeof(IndexList))
+                    if (expr.Right.GetType() != typeof(Property) && expr.Right.GetType() != typeof(VariableReference))
                     {
                         ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "The operand of an increase or decrease operator must be a variable, an property or an indexer", 0, 0);
                     }
@@ -62,10 +62,20 @@ namespace Interprete
                                     find = true;
                                     break;
                                 }
+                                else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"{expr.Op.Lexeme} operator cannot be applied to {item[variable1.Name]!.GetType()}", 0, 0);
 
                             }
                         }
                         if (!find) return ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "Undeclared varible '" + ((VariableReference)expr.Right).Name + "'. ", 0, 0);
+                    }
+                    else if (expr.Right is Property)
+                    {
+                        if (right is double value)
+                        {
+                            if (expr.Op.Type == TokenType.Increment) ++value;
+                            else --value;
+                        }
+                        else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"{expr.Op.Lexeme} operator cannot be applied to {right!.GetType()}", 0, 0);
                     }
                     return null;
             }
@@ -240,7 +250,6 @@ namespace Interprete
         public object? Visit(Property property)
         {
             object? obj = evaluate(property.Object);
-            //if(obj!.GetType() != typeof(Context)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "");
             return null;
         }
 
@@ -253,7 +262,7 @@ namespace Interprete
         {
             object? left = evaluate(expr.Left);
             bool find = false;
-            if(expr.Left.GetType() == typeof(Property)&& expr.Left.GetType() != typeof(VariableReference) || expr.Left.GetType() != typeof(IndexList))
+            if (expr.Left.GetType() == typeof(Property) && expr.Left.GetType() != typeof(VariableReference) || expr.Left.GetType() != typeof(IndexList))
             {
                 ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "The operand of an increase or decrease operator must be a variable, an property or an indexer", 0, 0);
             }
