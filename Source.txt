@@ -1,0 +1,40 @@
+card
+{
+    Type: "Oro",
+    Name: "Hermione",
+    Faction: "Gryffindor",
+    Power: 8,
+    Range: [ "Melee", "Ranged"],
+    OnActivation:
+    [
+        {
+            Effect:
+            {
+                Name: "Damage",
+                Amount: 5,
+            },
+            Selector:
+            {
+                Source: "board",
+                Single: false,
+                Predicate: (unit) => unit.Faction == "Gryffindor" @@ "House"
+            },
+            PostAction:
+            {
+                    
+                {
+                    Type: "ReturnToDeck",
+                    Selector:
+                    {
+                        Source: "parent",
+                        Single: false,
+                        Predicate: (unit) => unit.Power < 1
+                    },
+                }
+            }
+        },
+        {
+            Effect: "Draw"
+        }
+    ]
+}

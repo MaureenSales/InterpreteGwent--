@@ -4,9 +4,9 @@ namespace Interprete
     {
         public ASTnode Source {get; private set;}
         public ASTnode Single {get; private set;}
-        public PredicateLambda Predicate {get; private set;}
+        public ASTnode Predicate {get; private set;}
 
-        public Selector (ASTnode source, ASTnode single, PredicateLambda predicate)
+        public Selector (ASTnode source, ASTnode single, ASTnode predicate)
         {
             Source = source;
             Single = single;

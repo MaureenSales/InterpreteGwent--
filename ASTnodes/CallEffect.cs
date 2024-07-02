@@ -6,10 +6,10 @@ namespace Interprete
     {
         public ASTnode Name {get; private set;}
         public Dictionary<VariableReference, ASTnode> Parameters {get; private set;}
-        public Selector? Selector {get; private set;}
-        public CallEffect? PostAction {get; private set;}
+        public ASTnode? Selector {get; private set;}
+        public ASTnode? PostAction {get; private set;}
 
-        public CallEffect( ASTnode name, Dictionary<VariableReference,ASTnode> parameters, Selector? selector, CallEffect? postAction)
+        public CallEffect( ASTnode name, Dictionary<VariableReference,ASTnode> parameters, ASTnode? selector, ASTnode? postAction)
         {
             Name = name;
             Parameters = parameters;

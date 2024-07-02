@@ -12,3 +12,4 @@
 /home/maureensb/Documentos/InterpreteGwent++/obj/Debug/net8.0/InterpreteGwent++.pdb
 /home/maureensb/Documentos/InterpreteGwent++/obj/Debug/net8.0/InterpreteGwent++.genruntimeconfig.cache
 /home/maureensb/Documentos/InterpreteGwent++/obj/Debug/net8.0/ref/InterpreteGwent++.dll
+/home/maureensb/Documentos/InterpreteGwent++/obj/Debug/net8.0/InterpreteGwent++.sourcelink.json

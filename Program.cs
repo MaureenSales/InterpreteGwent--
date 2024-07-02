@@ -44,6 +44,9 @@ internal class Program
                 System.Console.WriteLine(printer.Print(stm));
                 System.Console.WriteLine();
             }
+
+            System.Console.WriteLine("Successfully completed " + "🎊");
+
             Evaluador evaluador = new Evaluador();
             foreach (var stm in parser.Statements)
             {
