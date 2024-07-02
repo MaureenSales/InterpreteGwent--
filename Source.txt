@@ -7,10 +7,6 @@ effect
     },
     Action: (targets, context) =>
     {
-        context.Hand.Push();
-        context.Power.Faction;
         context.Board[0].Power;
-        targets[0].Power.Pop();
-        5 + 4 - 3;
     }
 }

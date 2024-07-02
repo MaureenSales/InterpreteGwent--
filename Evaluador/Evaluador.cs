@@ -1,4 +1,5 @@
 using System.Net.WebSockets;
+using System.Reflection;
 using System.Runtime.InteropServices;
 
 namespace Interprete
@@ -250,7 +251,31 @@ namespace Interprete
         public object? Visit(Property property)
         {
             object? obj = evaluate(property.Object);
-            return null;
+            string access = "";
+            if(property.PropertyAccess is VariableReference variable)
+            {
+                if(!TokenTypeExtensions.Properties.Contains(access)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"{obj!.GetType()} no contiene un definicion para {access}", 0, 0);
+                access = variable.Name;
+            }
+            else if(property.PropertyAccess is CallMethod method)
+            {
+                access = method.MethodName.Lexeme;
+                if(!TokenTypeExtensions.Methods.Contains(access)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"{obj!.GetType()} no contiene un definicion para {access}", 0, 0);
+            }
+
+            if(obj is Card card)
+            {
+                PropertyInfo? propertyInfo = card.GetType().GetProperty(access);
+                if(propertyInfo is null) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"{obj!.GetType()} no contiene un definicion para {access}", 0, 0);
+                return propertyInfo.GetValue(card);
+            }
+            else if(obj is Context context)
+            {
+                PropertyInfo? propertyInfo = context.GetType().GetProperty(access);
+                if(propertyInfo is null) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"{obj!.GetType()} no contiene un definicion para {access}", 0, 0);
+                return propertyInfo.GetValue(context);
+            }
+            else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"{obj!.GetType()} no contiene un definicion para {access}", 0, 0);
         }
 
         public object? Visit(CallMethod callMethod)

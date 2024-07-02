@@ -714,7 +714,7 @@ namespace Interprete
                             left =  new Property(left, CallMethod(Advance()));
                             break;
                         case TokenType.OpCurlyBracket:
-                            left = new Property(left, Indexer(new VariableReference(Advance())));
+                            left = Indexer(new Property(left, new VariableReference(Advance())));
                             break;
                         default: left =  new VariableReference(Advance());
                         break;

@@ -54,7 +54,7 @@ namespace Interprete
 
         public string Visit(VariableReference variableReference)
         {
-            return $"{variableReference.Name}";
+            return $"{variableReference.Name} is VR";
         }
 
         public string Visit(Assignment assignment)
@@ -205,7 +205,7 @@ namespace Interprete
 
         public string Visit(IndexList indexList)
         {
-            return $"{Print(indexList.List)} [{Print(indexList.Index)}]";
+            return $"({Print(indexList.List)} [{Print(indexList.Index)}])";
         }
     }
 }
