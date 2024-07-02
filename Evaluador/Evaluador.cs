@@ -247,7 +247,7 @@ namespace Interprete
 
             return null;
         }
-
+ 
         public object? Visit(Property property)
         {
             object? obj = evaluate(property.Object);
