@@ -5,11 +5,11 @@ using UnityEngine;
 public class CallEffect : ASTnode
 {
     public ASTnode Name { get; private set; }
-    public Dictionary<VariableReference, ASTnode> Parameters { get; private set; }
+    public List<ASTnode> Parameters { get; private set; }
     public ASTnode? Selector { get; private set; }
     public ASTnode? PostAction { get; private set; }
 
-    public CallEffect(ASTnode name, Dictionary<VariableReference, ASTnode> parameters, ASTnode? selector, ASTnode? postAction)
+    public CallEffect(ASTnode name, List<ASTnode> parameters, ASTnode? selector, ASTnode? postAction)
     {
         Name = name;
         Parameters = parameters;

@@ -91,7 +91,7 @@ public class PrintASTnode : IVsitor<string>
 
     public string Visit(PredicateLambda predicateLambda)
     {
-        return $"({predicateLambda.Parameter.Lexeme} => {Print(predicateLambda.BodyPredicate)})";
+        return $"({Print(predicateLambda.Parameter)} => {Print(predicateLambda.BodyPredicate)})";
     }
 
     public string Visit(ArithmeticAssignment arithmeticAssignment)
@@ -150,7 +150,7 @@ public class PrintASTnode : IVsitor<string>
         foreach (var item in actionFun.Parameters)
         {
             if (count > 0) result += ", ";
-            result += item.Lexeme;
+            result += Print(item);
             count++;
         }
         result += ")\n";
@@ -178,9 +178,9 @@ public class PrintASTnode : IVsitor<string>
     {
         string result = "";
         result += Print(callEffect.Name) + "\n";
-        foreach (var item in callEffect.Parameters.Keys)
+        foreach (var item in callEffect.Parameters)
         {
-            result += $"{Print(item)} : {Print(callEffect.Parameters[item])} \n";
+            result += $"{Print(item)}) \n";
         }
 
         if (callEffect.Selector != null) result += $"Selector: {Print(callEffect.Selector)} \n";

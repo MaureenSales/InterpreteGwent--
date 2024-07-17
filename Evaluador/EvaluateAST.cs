@@ -2,15 +2,21 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Reflection;
+using System;
+using System.Linq;
 #nullable enable
 
 public class Evaluador : IVsitor<object?>
 {
     public Stack<Dictionary<string, object?>> VariableScopes;
+    public Dictionary<string, (List<(string, object)>, ASTnode)> Selectors;
+    public List<object>? SelectorsList;
 
     public Evaluador()
     {
         VariableScopes = new();
+        Selectors = new();
+        SelectorsList = null;
         EnterScope();
     }
 
@@ -149,7 +155,7 @@ public class Evaluador : IVsitor<object?>
             case TokenType.Modulo:
                 return (double)left! % (double)right!;
             case TokenType.Pow:
-                return Math.Pow((double)left!, (double)right!);
+                return System.Math.Pow((double)left!, (double)right!);
         }
 
         return null;
@@ -205,6 +211,11 @@ public class Evaluador : IVsitor<object?>
     }
 
     public object? Visit(VariableReference expr)
+    {
+        return FindVariable(expr); ;
+    }
+
+    private object? FindVariable(VariableReference expr)
     {
         foreach (var item in VariableScopes)
         {
@@ -267,6 +278,7 @@ public class Evaluador : IVsitor<object?>
         {
             PropertyInfo? propertyInfo = card.GetType().GetProperty(access);
             if (propertyInfo is null) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"{obj!.GetType()} no contiene un definicion para {access}", 0, 0);
+            if (access == "Faction") return propertyInfo.GetValue(card).ToString();
             return propertyInfo.GetValue(card);
         }
         else if (obj is Context context)
@@ -280,7 +292,7 @@ public class Evaluador : IVsitor<object?>
 
     public object? Visit(CallMethod callMethod)
     {
-        throw new NotImplementedException();
+        throw new System.NotImplementedException();
     }
 
     public object? Visit(UnaryInverseOp expr)
@@ -316,7 +328,10 @@ public class Evaluador : IVsitor<object?>
 
     public object? Visit(PredicateLambda predicateLambda)
     {
-        throw new NotImplementedException();
+        var target = evaluate(predicateLambda.Parameter);
+        if (!(evaluate(predicateLambda.BodyPredicate) is bool condition)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "Un predicado debe devolver un booleano", 0, 0);
+        else if (condition) return target;
+        else return null;
     }
 
     public object? Visit(ArithmeticAssignment expr)
@@ -359,47 +374,323 @@ public class Evaluador : IVsitor<object?>
 
     public object? Visit(While @while)
     {
-        throw new NotImplementedException();
+        EnterScope();
+        while (IsTruthy(evaluate(@while.Condition)))
+        {
+            foreach (var item in @while.Instructions)
+            {
+                evaluate(item);
+            }
+        }
+        ExitScope();
+        return null;
     }
 
     public object? Visit(For @for)
     {
-        throw new NotImplementedException();
+        EnterScope();
+        var element = @for.Element as VariableReference;
+        VariableScopes.Peek().Add(element!.Name, null);
+        var list = evaluate(@for.Collection);
+        if (list is IList collection)
+        {
+            foreach (var item in collection)
+            {
+                VariableScopes.Peek()[element!.Name] = item;
+                foreach (var instrctruction in @for.Instructions)
+                {
+                    evaluate(instrctruction);
+                }
+            }
+        }
+        else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "El ciclo 'for' solo puede ser usado en listas", 0, 0);
+        ExitScope();
+        return null;
     }
 
     public object? Visit(Effect effect)
     {
-        throw new NotImplementedException();
+        string? name = evaluate(effect.Name) as string;
+        if (name is null) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "el capo Name de un effecto es de tipo string", 0, 0);
+        if (!Global.EffectsCreated.ContainsKey(name!))
+        {
+            Global.EffectsCreated.Add(name!, effect);
+        }
+        else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"el efecto {name!} ya esta definido", 0, 0);
+        return null;
     }
 
     public object? Visit(ActionFun actionFun)
     {
-        throw new NotImplementedException();
+        bool[] parameters = new bool[2];
+        IList list;
+        Context context;
+        foreach (var param in actionFun.Parameters)
+        {
+            var parameter = evaluate(param);
+            if (parameter is IList)
+            {
+                list = (IList)parameter;
+                if (parameters[0] == false) parameters[0] = true;
+                else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "Action no posee ninguna sobrecarga con dos parametros IList", 0, 0);
+            }
+            else if (parameter is Context)
+            {
+                context = (Context)parameter;
+                if (parameters[1] == false) parameters[1] = true;
+                else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "Action no posee ninguna sobrecarga con dos parametros Context", 0, 0);
+            }
+            else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"Action no acepta argumentos de tipo {parameter!.GetType()}", 0, 0);
+        }
+
+        EnterScope();
+        foreach (var instruction in actionFun.Body)
+        {
+            evaluate(instruction);
+        }
+        ExitScope();
+        return null;
     }
 
     public object? Visit(AssignmentWithType assignmentWithType)
     {
-        throw new NotImplementedException();
+        var variable = evaluate(assignmentWithType.Variable);
+        switch (assignmentWithType.TypeVar.Type)
+        {
+            case TokenType.TypeString:
+                if (!(variable is string)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"no se puede convertir de tipo {variable!.GetType()} a string", 0, 0);
+                break;
+            case TokenType.TypeNumber:
+                if (!(variable is double)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"no se puede convertir de tipo {variable!.GetType()} a number", 0, 0);
+                break;
+            case TokenType.Bool:
+                if (!(variable is bool)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"no se puede convertir de tipo {variable!.GetType()} a bool", 0, 0);
+                break;
+        }
+        return null;
     }
 
     public object? Visit(Selector selector)
     {
-        throw new NotImplementedException();
+        string? source = evaluate(selector.Source) as string;
+        bool firstValue = (bool)evaluate(selector.Single)!;
+        Context context = new Context();
+        List<object> targets = new List<object>();
+        EnterScope();
+        PredicateLambda? predicate = selector.Predicate as PredicateLambda;
+        VariableReference? variable = predicate!.Parameter as VariableReference;
+        string? name = variable!.Name;
+        List<GameObject> sources = new List<GameObject>();
+        List<Card> cards = new List<Card>();
+
+        switch (source)
+        {
+            case "board":
+                Debug.Log("source: board");
+                sources = context.FilterOfCards(LocationCards.Board, context.TriggerPlayer);
+                foreach (var card in sources)
+                {
+                    VariableScopes.Peek()[name] = card.GetComponent<ThisCard>().thisCard;
+                    var target = evaluate(predicate);
+                    if (target != null) targets.Add(card);
+                }
+                break;
+            case "hand":
+                Debug.Log("source: hand");
+                sources = context.FilterOfCards(LocationCards.Hand, context.TriggerPlayer);
+                foreach (var card in sources)
+                {
+                    VariableScopes.Peek()[name] = card.GetComponent<ThisCard>().thisCard;
+                    var target = evaluate(predicate);
+                    if (target != null) targets.Add(card);
+                }
+                break;
+            case "otherHand":
+                Debug.Log("source: otherHand");
+                sources = context.FilterOfCards(LocationCards.Hand, context.OtherPlayer);
+                foreach (var card in sources)
+                {
+                    VariableScopes.Peek()[name] = card.GetComponent<ThisCard>().thisCard;
+                    var target = evaluate(predicate);
+                    if (target != null) targets.Add(card);
+                }
+                break;
+            case "deck":
+                Debug.Log("source: deck");
+                cards = context.Deck(context.TriggerPlayer);
+                foreach (var card in cards)
+                {
+                    VariableScopes.Peek()[name] = card;
+                    var target = evaluate(predicate);
+                    if (target != null) targets.Add(target);
+                }
+                break;
+            case "otherDeck":
+                Debug.Log("source: otherDeck");
+                cards = context.Deck(context.OtherPlayer);
+                foreach (var card in cards)
+                {
+                    VariableScopes.Peek()[name] = card;
+                    var target = evaluate(predicate);
+                    if (target != null) targets.Add(target);
+                }
+                break;
+            case "field":
+                Debug.Log("source: field");
+                sources = context.FilterOfCards(LocationCards.Field, context.TriggerPlayer);
+                foreach (var card in sources)
+                {
+                    VariableScopes.Peek()[name] = card.GetComponent<ThisCard>().thisCard;
+                    var target = evaluate(predicate);
+                    if (target != null) targets.Add(card);
+                }
+                break;
+            case "otherField":
+                Debug.Log("source: otherField");
+                sources = context.FilterOfCards(LocationCards.Field, context.OtherPlayer);
+                foreach (var card in sources)
+                {
+                    VariableScopes.Peek()[name] = card.GetComponent<ThisCard>().thisCard;
+                    var target = evaluate(predicate);
+                    if (target != null) targets.Add(card);
+                }
+                break;
+            case "parent":
+                Debug.Log("source: parent");
+                if (SelectorsList is null) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "No existe una fuente previamente definida", 0, 0);
+                else targets = SelectorsList;
+                break;
+        }
+
+        if (firstValue)
+        {
+            var target = targets[0];
+            targets = new List<object> { target };
+        }
+
+        SelectorsList = targets;
+        ExitScope();
+        return null;
+
     }
 
     public object? Visit(CallEffect callEffect)
     {
-        throw new NotImplementedException();
+        EnterScope();
+        string? name = evaluate(callEffect.Name) as string;
+        if (name == null) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "el campo Name de un efecto es de tipo string", 0, 0);
+        if (!Global.EffectsCreated.ContainsKey(name)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"El efecto {name} no esta definido", 0, 0);
+        Effect effect = Global.EffectsCreated[name];
+
+        List<(string, object)> arguments = new List<(string, object)>();
+        if (effect.Params.Count != callEffect.Parameters.Count) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"El efecto {name} recibe {effect.Params.Count} argumentos", 0, 0);
+        foreach (var assignment in callEffect.Parameters)
+        {
+            evaluate(assignment);
+            Assignment? argument = assignment as Assignment;
+            VariableReference? variable = argument!.Variable as VariableReference;
+            arguments.Add((variable!.Name, evaluate(variable)!));
+        }
+
+        foreach (var declaration in effect.Params)
+        {
+            evaluate(declaration);
+        }
+
+        if (!(callEffect.Selector is null))
+        {
+            Selector? selector = callEffect.Selector as Selector;
+            string? source = evaluate(selector!.Source) as string;
+            if (source == null) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "el campo Source de un selector es de tipo string", 0, 0);
+            if (!(evaluate(selector.Single) is bool)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "el campo Single de un Selector es de tipo booleano", 0, 0);
+            if (!Global.Sources.Contains(source)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"la fuente {source} no esta definida", 0, 0);
+            Selectors[name] = (arguments, callEffect.Selector);
+
+        }
+        else SelectorsList = null;
+        if (!(callEffect.PostAction is null))
+        {
+            evaluate(callEffect.PostAction);
+        }
+
+
+        ExitScope();
+        return null;
     }
 
     public object? Visit(CardDeclaration card)
     {
-        throw new NotImplementedException();
+        string? type = evaluate(card.Type) as string;
+        if (type is null) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "el campo Type de una carta es de tipo string", 0, 0);
+        if (!Global.TypeCards.Contains(type)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"El tipo {type} no esta definido", 0, 0);
+
+        string? name = evaluate(card.Name) as string;
+        if (name is null) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "el campo Name de una carta es de tipo string", 0, 0);
+
+        string? faction = evaluate(card.Faction) as string;
+        if (faction is null) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "el campo Faction de una carta es de tipo string", 0, 0);
+        bool tryParse = Enum.TryParse(faction, out Global.Factions fact);
+        if (!tryParse) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"La faccion {faction} no esta definida", 0, 0);
+        Global.Factions Faction = fact;
+        double power;
+        if (!(evaluate(card.Power) is double)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "el campo Power de una carta es de tipo number", 0, 0);
+        else power = (double)evaluate(card.Power)!;
+
+        List<Global.AttackModes> attackModes = new List<Global.AttackModes>();
+        if (card.Range.Count > 3) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "solo exiten tres posibles rangos", 0, 0);
+        foreach (var element in card.Range)
+        {
+            string? range = evaluate(element) as string;
+            if (range is null) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "el campo Range de una carta esta compuesto por elementos de tipo string", 0, 0);
+            tryParse = Enum.TryParse(range, out Global.AttackModes mode);
+            if (!tryParse) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"El rango {range} no esta definido", 0, 0);
+            else attackModes.Add(mode);
+        }
+
+        foreach (var effect in card.Effects)
+        {
+            evaluate(effect);
+            SelectorsList = null;
+        }
+        List<Skill> skills = new List<Skill>();
+        foreach (var skill in Selectors)
+        {
+            Debug.Log(skill.Key);
+            skills.Add(new Skill(skill.Key, skill.Value.Item1, skill.Value.Item2));
+        }
+        Card newCard = null!;
+        //lider
+        switch (type)
+        {
+            case "Oro":
+                newCard = new HeroUnit(name, Faction, skills, "", (int)power, attackModes, Resources.Load<Sprite>("image"));
+                break;
+            case "Plata":
+                newCard = new Unit(name, Faction, skills, "", (int)power, attackModes, Resources.Load<Sprite>("image"));
+                break;
+            case "Lider":
+                break;
+            case "Aumento":
+                newCard = new Boost(name, skills, "", Resources.Load<Sprite>("image"));
+                break;
+            case "Clima":
+                newCard = new Weather(name, skills, "", Resources.Load<Sprite>("image"), Resources.Load<Sprite>("Frost"));
+                break;
+            case "Despeje":
+                newCard = new Clear(name, skills, "", Resources.Load<Sprite>("image"));
+                break;
+        }
+        Debug.Log(CardDataBase.Decks.Count);
+        foreach (var deck in CardDataBase.Decks.Values)
+        {
+            deck.AddCard(newCard);
+        }
+        return null;
     }
 
     public object? Visit(IndexList indexList)
     {
-        throw new NotImplementedException();
+        throw new System.NotImplementedException();
     }
 }
 

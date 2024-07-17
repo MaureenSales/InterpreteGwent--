@@ -19,10 +19,8 @@ public class Token : MonoBehaviour
 
     public new void ToString()
     {
-        Console.ForegroundColor = ConsoleColor.DarkGreen;
         System.Console.Write(this.Type);
         System.Console.Write(": ");
-        Console.ForegroundColor = ConsoleColor.White;
         System.Console.Write(this.Lexeme);
     }
 }

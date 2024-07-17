@@ -4,9 +4,9 @@ using UnityEngine;
 
 public class PredicateLambda : ASTnode
 {
-    public Token Parameter { get; private set; }
+    public ASTnode Parameter { get; private set; }
     public ASTnode BodyPredicate { get; private set; }
-    public PredicateLambda(Token variableReference, ASTnode bodyPredicate)
+    public PredicateLambda(ASTnode variableReference, ASTnode bodyPredicate)
     {
         Parameter = variableReference;
         BodyPredicate = bodyPredicate;

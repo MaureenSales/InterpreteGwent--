@@ -1,12 +1,38 @@
 effect
 {
-    Name: "weather",
+    Name: "Damage",
     Params:
     {
         Amount: Number
     },
-    Action: (targets, context) =>
+    Action: (targets, context) => {
+    for target in targets
     {
-        context.Board[0].Power;
-    }
+       i = 0;
+       while(i++ < Amount)
+       target.Power -= 1;
+
+    };
+   }
 }
+
+card {
+      Type: "Plata",
+      Name: "SuperJenn",
+      Faction: "Slytherin",
+      Power: 10,
+      Range: [ "Melee"],
+      OnActivation: [
+ {
+   Effect: {
+           Name: "Damage",
+           Amount: 5,
+           },
+   Selector: {
+             Source: "board",
+             Single: false,
+             Predicate:
+             (unit) => unit.Faction == "Gryffindor"
+             },
+            }]
+      }

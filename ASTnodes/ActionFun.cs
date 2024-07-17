@@ -4,10 +4,10 @@ using UnityEngine;
 
 public class ActionFun : ASTnode
 {
-    public List<Token> Parameters { get; private set; }
+    public List<ASTnode> Parameters { get; private set; }
     public List<ASTnode> Body { get; private set; }
 
-    public ActionFun(List<Token> parameters, List<ASTnode> body)
+    public ActionFun(List<ASTnode> parameters, List<ASTnode> body)
     {
         Parameters = parameters;
         Body = body;

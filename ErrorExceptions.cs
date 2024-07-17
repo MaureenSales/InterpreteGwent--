@@ -4,9 +4,9 @@ using UnityEngine;
 
 public class ErrorExceptions : MonoBehaviour
 {
-    public static Exception Error(ErrorType type, string error, int line, int column)
+    public static System.Exception Error(ErrorType type, string error, int line, int column)
     {
-        throw new Exception($"{type.ToString()} ERROR: {error} in line {line} at column {column}.");
+        throw new System.Exception($"{type.ToString()} ERROR: {error} in line {line} at column {column}.");
     }
 
     public enum ErrorType
