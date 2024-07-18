@@ -32,7 +32,28 @@ card {
              Source: "board",
              Single: false,
              Predicate:
-             (unit) => unit.Faction == "Gryffindor"
+             (unit) => unit.Power > 3
+             },
+            }]
+      }
+
+      card {
+      Type: "Plata",
+      Name: "SuperMell",
+      Faction: "Gryffindor",
+      Power: 7,
+      Range: [ "Melee"],
+      OnActivation: [
+ {
+   Effect: {
+           Name: "Damage",
+           Amount: 5,
+           },
+   Selector: {
+             Source: "board",
+             Single: false,
+             Predicate:
+             (unit) => unit.Type == "Oro"
              },
             }]
       }

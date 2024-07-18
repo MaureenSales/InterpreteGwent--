@@ -265,13 +265,14 @@ public class Evaluador : IVsitor<object?>
         string access = "";
         if (property.PropertyAccess is VariableReference variable)
         {
-            if (!TokenTypeExtensions.Properties.Contains(access)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"{obj!.GetType()} no contiene un definicion para {access}", 0, 0);
+            access = variable.Name;
+            if (!TokenTypeExtensions.Properties.Contains(access)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"{obj!.GetType()} no contiene una definicion para {access}", 0, 0);
             access = variable.Name;
         }
         else if (property.PropertyAccess is CallMethod method)
         {
             access = method.MethodName.Lexeme;
-            if (!TokenTypeExtensions.Methods.Contains(access)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"{obj!.GetType()} no contiene un definicion para {access}", 0, 0);
+            if (!TokenTypeExtensions.Methods.Contains(access)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"{obj!.GetType()} no contiene una definicion para {access}", 0, 0);
         }
 
         if (obj is Card card)
@@ -279,6 +280,22 @@ public class Evaluador : IVsitor<object?>
             PropertyInfo? propertyInfo = card.GetType().GetProperty(access);
             if (propertyInfo is null) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"{obj!.GetType()} no contiene un definicion para {access}", 0, 0);
             if (access == "Faction") return propertyInfo.GetValue(card).ToString();
+            else if (access == "Type")
+            {
+                string type = propertyInfo.GetValue(card).ToString();
+                Debug.Log(type);
+                switch (type)
+                {
+                    case "HeroUnit": return "Oro";
+                    case "DecoyUnit": return "Senuelo";
+                    case "Boost": return "Aumento";
+                    case "Clear": return "Despeje";
+                    case "Leader": return "Lider";
+                    case "Unit": return "Plata";
+                    case "Weather": return "Clima";
+                }
+            }
+            else if(access == "Power") return (double)propertyInfo.GetValue(card);
             return propertyInfo.GetValue(card);
         }
         else if (obj is Context context)
@@ -488,6 +505,7 @@ public class Evaluador : IVsitor<object?>
             case "board":
                 Debug.Log("source: board");
                 sources = context.FilterOfCards(LocationCards.Board, context.TriggerPlayer);
+                Debug.Log(sources.Count);
                 foreach (var card in sources)
                 {
                     VariableScopes.Peek()[name] = card.GetComponent<ThisCard>().thisCard;
@@ -569,6 +587,7 @@ public class Evaluador : IVsitor<object?>
         }
 
         SelectorsList = targets;
+        Debug.Log(targets.Count);
         ExitScope();
         return null;
 

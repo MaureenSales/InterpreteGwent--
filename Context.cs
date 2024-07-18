@@ -5,7 +5,7 @@ using UnityEngine;
 #nullable enable
 public class Context
 {
-    public static GameObject gameController = null!;
+    public static GameObject gameController;
     private GameController controller;
     public string TriggerPlayer { get; private set; }
     public string OtherPlayer { get; private set; }
@@ -34,9 +34,8 @@ public class Context
 
         if (type == LocationCards.Board)
         {
-            Debug.Log(controller is null);
-            //arreglar da eeror la linea de abajo
-            result = gameController!.transform.parent.GetComponentInChildren<Board>().AllCardsObject;
+            result = gameController!.transform.GetComponentInChildren<Board>().AllCardsObject;
+            Debug.Log(result.Count + " todas las cartas");
         }
         else
         {
@@ -53,7 +52,13 @@ public class Context
                     break;
             }
         }
-        return result;
+
+        List<GameObject> temp = new List<GameObject>();
+        foreach (var item in result)
+        {
+            if(!(item.GetComponent<ThisCard>().thisCard is HeroUnit) && !(item.GetComponent<ThisCard>().thisCard is DecoyUnit)) temp.Add(item);
+        }
+        return temp;
     }
 
     public List<GameObject> Find(List<GameObject> cards, System.Func<GameObject, bool> predicate)
