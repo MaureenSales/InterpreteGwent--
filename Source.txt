@@ -29,7 +29,7 @@ card {
            Amount: 5,
            },
    Selector: {
-             Source: "board",
+             Source: "field",
              Single: false,
              Predicate:
              (unit) => unit.Power > 3
@@ -50,10 +50,10 @@ card {
            Amount: 5,
            },
    Selector: {
-             Source: "board",
+             Source: "otherField",
              Single: false,
              Predicate:
-             (unit) => unit.Type == "Oro"
+             (unit) => unit.Name == "SuperJenn"
              },
             }]
       }

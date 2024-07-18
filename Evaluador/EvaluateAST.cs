@@ -295,7 +295,12 @@ public class Evaluador : IVsitor<object?>
                     case "Weather": return "Clima";
                 }
             }
-            else if(access == "Power") return (double)propertyInfo.GetValue(card);
+            else if(access == "Power") 
+            {
+                Debug.Log(propertyInfo.GetValue(card).GetType().ToString());
+                double result = (double)(int)propertyInfo.GetValue(card);
+                return result;
+            }
             return propertyInfo.GetValue(card);
         }
         else if (obj is Context context)
