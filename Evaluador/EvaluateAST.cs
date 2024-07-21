@@ -4,19 +4,23 @@ using UnityEngine;
 using System.Reflection;
 using System;
 using System.Linq;
+using Unity.VisualScripting;
 #nullable enable
 
 public class Evaluador : IVsitor<object?>
 {
     public Stack<Dictionary<string, object?>> VariableScopes;
-    public Dictionary<string, (List<(string, object)>, ASTnode)> Selectors;
+    public List<(string, (Dictionary<string, object>, ASTnode))> Selectors;
     public List<object>? SelectorsList;
+    private IList? listForMethod;
+    private LocationCards location;
 
     public Evaluador()
     {
         VariableScopes = new();
         Selectors = new();
         SelectorsList = null;
+        listForMethod = null;
         EnterScope();
     }
 
@@ -34,10 +38,33 @@ public class Evaluador : IVsitor<object?>
     {
         return expr.Accept(this);
     }
+
+    public object? Evaluate(Effect effect, Skill skill, IList targets)
+    {
+        EnterScope();
+        foreach (var param in skill.Arguments!)
+        {
+            VariableScopes.Peek()[param.Key] = param.Value;
+        }
+
+        ActionFun? action = effect.Action as ActionFun;
+        Debug.Log(action is null);
+        VariableReference? param1 = action!.Parameters[0] as VariableReference;
+        Debug.Log(param1 is null);
+        Debug.Log(param1!.Name);
+        VariableScopes.Peek()[param1!.Name] = targets;
+        VariableReference? param2 = action!.Parameters[1] as VariableReference;
+        VariableScopes.Peek()[param2!.Name] = new Context();
+
+        evaluate(effect.Action);
+        ExitScope();
+        return null;
+    }
+
     public object? Visit(UnaryOp expr)
     {
         object? right = evaluate(expr.Right);
-
+        object? result = null;
         switch (expr.Op.Type)
         {
             case TokenType.Subtraction:
@@ -66,6 +93,7 @@ public class Evaluador : IVsitor<object?>
                                 var value = (double)item[variable1.Name]!;
                                 if (expr.Op.Type == TokenType.Increment) item[variable1.Name] = ++value;
                                 else item[variable1.Name] = --value;
+                                result = item[variable1.Name];
                                 find = true;
                                 break;
                             }
@@ -75,19 +103,52 @@ public class Evaluador : IVsitor<object?>
                     }
                     if (!find) return ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "Undeclared varible '" + ((VariableReference)expr.Right).Name + "'. ", 0, 0);
                 }
-                else if (expr.Right is Property)
+                if (expr.Right is Property property)
                 {
-                    if (right is double value)
+                    object? obj = evaluate(property.Object);
+                    string access = "";
+                    PropertyIsValid(ref access, property, obj);
+
+                    if (obj is Card card)
                     {
-                        if (expr.Op.Type == TokenType.Increment) ++value;
-                        else --value;
+                        SetterPropertyIsPublic(obj, access);
+                        Unit unit = (Unit)card;
+                        if (expr.Op.Type == TokenType.Increment) ++unit.Power;
+                        else --unit.Power;
+                        result = unit.Power;
                     }
-                    else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"{expr.Op.Lexeme} operator cannot be applied to {right!.GetType()}", 0, 0);
+                    else if (obj is GameObject cardUI)
+                    {
+                        SetterPropertyIsPublic(cardUI.GetComponent<ThisCard>().thisCard, access);
+                        if (expr.Op.Type == TokenType.Increment) cardUI.GetComponent<ThisCard>().powerText.text = (int.Parse(cardUI.GetComponent<ThisCard>().powerText.text) + 1).ToString();
+                        else cardUI.GetComponent<ThisCard>().powerText.text = (int.Parse(cardUI.GetComponent<ThisCard>().powerText.text) - 1).ToString(); ;
+                        result = int.Parse(cardUI.GetComponent<ThisCard>().powerText.text);
+                    }
+                    else if (obj is Context) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"el descriptor de acceso de la propiedad {access} es inaccesible", 0, 0);
+                    else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"{obj!.GetType()} no contiene un definicion para {access}", 0, 0);
                 }
+                else if (expr.Right is IndexList indexList)
+                {
+                    var i = evaluate(indexList.Index)!;
+                    int index = (int)(double)i;
+                    if (!(i is double)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "una lista se debe indexar mediante un valor entero", 0, 0);
+                    var List = evaluate(indexList.List);
+                    if (!(List is IList list)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"no se puede aplicar la indizacion a un tipo {List!.GetType()}", 0, 0);
+                    else
+                    {
+                        SetterIndexerIsValid(list, index, i);
+                        var value = (double)list[index]!;
+                        if (expr.Op.Type == TokenType.Increment) list[index] = ++value;
+                        else list[index] = --value;
+                        result = value;
+                    }
+                }
+                else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"el operador {expr.Op.Lexeme} solo se puede aplicar a una variable, una propiedad o un indizador", 0, 0);
+
                 return null;
         }
 
-        return right;
+        return result;
     }
 
     public object? Visit(Number number)
@@ -232,7 +293,8 @@ public class Evaluador : IVsitor<object?>
     public object? Visit(Assignment expr)
     {
         object? value = evaluate(expr.Value!);
-        //variable
+        if (value is null) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "la expresion derecha de una asignacion debe ser directamente un valor o una variable de referencia", 0, 0);
+
         bool find = false;
         if (expr.Variable is VariableReference variable1)
         {
@@ -251,34 +313,61 @@ public class Evaluador : IVsitor<object?>
                 VariableScopes.Peek().Add(variable1.Name, value);
             }
         }
-        else
+        else if (expr.Variable is Property property)
         {
-            //implementar
-        }
+            object? obj = evaluate(property.Object);
+            string access = "";
+            PropertyIsValid(ref access, property, obj);
+            if (!(value is double)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"no se puede convertir implicitamente el tipo {obj!.GetType()} en int", 0, 0);
 
-        return null;
+            if (obj is Card card)
+            {
+                SetterPropertyIsPublic(obj, access);
+                Unit unit = (Unit)card;
+                unit.Power = (int)(double)value;
+            }
+            else if (obj is GameObject cardUI)
+            {
+                SetterPropertyIsPublic(cardUI.GetComponent<ThisCard>().thisCard, access);
+                cardUI.GetComponent<ThisCard>().powerText.text = value.ToString();
+            }
+            else if (obj is Context) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"el descriptor de acceso de la propiedad {access} es inaccesible", 0, 0);
+            else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"{obj!.GetType()} no contiene un definicion para {access}", 0, 0);
+        }
+        else if (expr.Variable is IndexList indexList)
+        {
+            var i = evaluate(indexList.Index)!;
+            int index = (int)(double)i;
+            if (!(i is double)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "una lista se debe indexar mediante un valor entero", 0, 0);
+            var List = evaluate(indexList.List);
+            if (!(List is IList list)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"no se puede aplicar la indizacion a un tipo {List!.GetType()}", 0, 0);
+            else
+            {
+                SetterIndexerIsValid(list, index, value);
+                list[index] = value;
+            }
+        }
+        else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "la parte izquierda de una asignacion debe ser una variable, una propiedad o un indizador", 0, 0);
+        return value;
     }
 
     public object? Visit(Property property)
     {
         object? obj = evaluate(property.Object);
         string access = "";
-        if (property.PropertyAccess is VariableReference variable)
+        PropertyIsValid(ref access, property, obj);
+        if (obj is GameObject cardUI)
         {
-            access = variable.Name;
-            if (!TokenTypeExtensions.Properties.Contains(access)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"{obj!.GetType()} no contiene una definicion para {access}", 0, 0);
-            access = variable.Name;
+            if (access != "Power") obj = cardUI.GetComponent<ThisCard>().thisCard;
+            else
+            {
+                PropertyIsValid(cardUI.GetComponent<ThisCard>().thisCard, access);
+                return int.Parse(cardUI.GetComponent<ThisCard>().powerText.text);
+            }
         }
-        else if (property.PropertyAccess is CallMethod method)
-        {
-            access = method.MethodName.Lexeme;
-            if (!TokenTypeExtensions.Methods.Contains(access)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"{obj!.GetType()} no contiene una definicion para {access}", 0, 0);
-        }
-
         if (obj is Card card)
         {
-            PropertyInfo? propertyInfo = card.GetType().GetProperty(access);
-            if (propertyInfo is null) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"{obj!.GetType()} no contiene un definicion para {access}", 0, 0);
+            PropertyInfo propertyInfo = PropertyIsValid(obj, access);
             if (access == "Faction") return propertyInfo.GetValue(card).ToString();
             else if (access == "Type")
             {
@@ -295,7 +384,7 @@ public class Evaluador : IVsitor<object?>
                     case "Weather": return "Clima";
                 }
             }
-            else if(access == "Power") 
+            else if (access == "Power")
             {
                 Debug.Log(propertyInfo.GetValue(card).GetType().ToString());
                 double result = (double)(int)propertyInfo.GetValue(card);
@@ -305,27 +394,84 @@ public class Evaluador : IVsitor<object?>
         }
         else if (obj is Context context)
         {
-            PropertyInfo? propertyInfo = context.GetType().GetProperty(access);
-            if (propertyInfo is null) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"{obj!.GetType()} no contiene un definicion para {access}", 0, 0);
-            return propertyInfo.GetValue(context);
+            if (property.PropertyAccess is CallMethod method) return evaluate(method);
+            return PropertyIsValid(obj, access).GetValue(context);
         }
-        else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"{obj!.GetType()} no contiene un definicion para {access}", 0, 0);
+        else if (obj is IList list)
+        {
+            listForMethod = list;
+            if (property.PropertyAccess is CallMethod method) return evaluate(property.PropertyAccess);
+            else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"{obj!.GetType()} no contiene un definicion para {evaluate(property.PropertyAccess)}", 0, 0);
+        }
+        return null;
     }
 
     public object? Visit(CallMethod callMethod)
     {
-        throw new System.NotImplementedException();
+        if (!TokenTypeExtensions.Methods.ContainsKey(callMethod.MethodName.Lexeme)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"el metodo {callMethod.MethodName.Lexeme} no esta definido", 0, 0);
+        if (callMethod.Arguments.Count != TokenTypeExtensions.Methods[callMethod.MethodName.Lexeme]) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"no existe una sobrecarga de {callMethod.MethodName.Lexeme} con {callMethod.Arguments.Count} parametros", 0, 0);
+        Context context = new Context();
+        List<object> result = new List<object>();
+        string player = "";
+        switch (callMethod.MethodName.Lexeme)
+        {
+            case "Pop":
+                if (listForMethod is null) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "el metodo Pop no esta definido", 0, 0);
+                context.Pop(listForMethod);
+                break;
+            case "Add":
+                if (listForMethod is null) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "el metodo Add no esta definido", 0, 0);
+                break;
+            case "Shuffle":
+                if (listForMethod is null) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "el metodo Shuffle no esta definido", 0, 0);
+                context.Shuffle(listForMethod);
+                break;
+            case "DeckOfPlayer":
+                player = (string)evaluate(callMethod.Arguments[0])!;
+                return context.FilterOfCards(LocationCards.Deck, player);
+            case "HandOfPlayer":
+                player = (string)evaluate(callMethod.Arguments[0])!;
+                return context.FilterOfCards(LocationCards.Hand, player);
+            case "FieldOfPlayer":
+                player = (string)evaluate(callMethod.Arguments[0])!;
+                return context.FilterOfCards(LocationCards.Field, player);
+            case "GraveyardOfPlayer":
+                player = (string)evaluate(callMethod.Arguments[0])!;
+                return context.FilterOfCards(LocationCards.Graveyard, player);
+            case "Push":
+                if (listForMethod is null) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "el metodo Push no esta definido", 0, 0);
+                break;
+            case "Remove":
+                if (listForMethod is null) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "el metodo Remove no esta definido", 0, 0);
+                context.Remove(evaluate(callMethod.Arguments[0])!, listForMethod);
+                break;
+            case "Find":
+                EnterScope();
+                if (listForMethod is null) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "el metodo Find no esta definido", 0, 0);
+                PredicateLambda? predicate = callMethod.Arguments[0] as PredicateLambda;
+                VariableReference? card = predicate!.Parameter as VariableReference;
+                foreach (var element in listForMethod)
+                {
+                    VariableScopes.Peek()[card!.Name] = element;
+                    var target = evaluate(predicate);
+                    if (target != null) result.Add(card);
+                }
+                ExitScope();
+                return result;
+            case "SendBottom":
+                if (listForMethod is null) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "el metodo SendBottom no esta definido", 0, 0);
+
+                break;
+        }
+        return null;
     }
 
     public object? Visit(UnaryInverseOp expr)
     {
+        Debug.Log(expr.Left.GetType());
         object? left = evaluate(expr.Left);
+        Debug.Log(left);
         bool find = false;
-        if (expr.Left.GetType() == typeof(Property) && expr.Left.GetType() != typeof(VariableReference) || expr.Left.GetType() != typeof(IndexList))
-        {
-            ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "The operand of an increase or decrease operator must be a variable, an property or an indexer", 0, 0);
-        }
-
         if (expr.Left is VariableReference variable)
         {
             foreach (var item in VariableScopes)
@@ -340,12 +486,53 @@ public class Evaluador : IVsitor<object?>
                         find = true;
                         break;
                     }
+                    else if (item[variable.Name] is null) continue;
+                    else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"no se puede convertir implicitamente del tipo {item[variable.Name]!.GetType()} a int", 0, 0);
 
                 }
             }
             if (!find) return ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "Undeclared varible '" + ((VariableReference)expr.Left).Name + "'. ", 0, 0);
         }
-        return null;
+        else if (expr.Left is Property property)
+        {
+            object? obj = evaluate(property.Object);
+            string access = "";
+            PropertyIsValid(ref access, property, obj);
+
+            if (obj is Card card)
+            {
+                SetterPropertyIsPublic(obj, access);
+                Unit unit = (Unit)card;
+                if (expr.Op.Type == TokenType.Increment) unit.Power++;
+                else unit.Power--;
+
+            }
+            else if (obj is GameObject cardUI)
+            {
+                SetterPropertyIsPublic(cardUI.GetComponent<ThisCard>().thisCard, access);
+                if (expr.Op.Type == TokenType.Increment) cardUI.GetComponent<ThisCard>().powerText.text = (int.Parse(cardUI.GetComponent<ThisCard>().powerText.text) + 1).ToString();
+                else cardUI.GetComponent<ThisCard>().powerText.text = (int.Parse(cardUI.GetComponent<ThisCard>().powerText.text) - 1).ToString();
+            }
+            else if (obj is Context) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"el descriptor de acceso de la propiedad {access} es inaccesible", 0, 0);
+            else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"{obj!.GetType()} no contiene un definicion para {access}", 0, 0);
+        }
+        else if (expr.Left is IndexList indexList)
+        {
+            var i = evaluate(indexList.Index)!;
+            int index = (int)(double)i;
+            if (!(i is double)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "una lista se debe indexar mediante un valor entero", 0, 0);
+            var List = evaluate(indexList.List);
+            if (!(List is IList list)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"no se puede aplicar la indizacion a un tipo {List!.GetType()}", 0, 0);
+            else
+            {
+                SetterIndexerIsValid(list, index, i);
+                var value = (double)list[index]!;
+                if (expr.Op.Type == TokenType.Increment) list[index] = value++;
+                else list[index] = value--;
+            }
+        }
+        else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"el operador {expr.Op.Lexeme} solo se puede aplicar a una variable, una propiedad o un indizador", 0, 0);
+        return left;
     }
 
     public object? Visit(PredicateLambda predicateLambda)
@@ -361,6 +548,7 @@ public class Evaluador : IVsitor<object?>
         object? num = evaluate(expr.Value);
         if (!(num is double)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"Cann't {expr.Op} between {evaluate(expr.Variable)!.GetType()} and {num!.GetType()}", 0, 0);
         bool find = false;
+        double result = 0;
         if (expr.Variable is VariableReference variable1)
         {
             foreach (var item in VariableScopes)
@@ -373,7 +561,7 @@ public class Evaluador : IVsitor<object?>
                         switch (expr.Op.Type)
                         {
                             case TokenType.SumAssignment:
-                                item[variable1.Name] = value + (double)num; break;
+                                item[variable1.Name] = value + (double)num; ; break;
                             case TokenType.MinusAssignment:
                                 item[variable1.Name] = value - (double)num; break;
                             case TokenType.ProductAssignment:
@@ -383,6 +571,7 @@ public class Evaluador : IVsitor<object?>
                             case TokenType.ModuloAssignment:
                                 item[variable1.Name] = value % (double)num; break;
                         }
+                        result = (double)item[variable1.Name]!;
                         find = true;
                         break;
                     }
@@ -391,7 +580,82 @@ public class Evaluador : IVsitor<object?>
             }
             if (!find) return ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "Undeclared varible '" + ((VariableReference)expr.Variable).Name + "'. ", 0, 0);
         }
-        return null;
+        if (expr.Variable is Property property)
+        {
+            object? obj = evaluate(property.Object);
+            string access = "";
+            PropertyIsValid(ref access, property, obj);
+
+            if (obj is Card card)
+            {
+                SetterPropertyIsPublic(obj, access);
+                Unit unit = (Unit)card;
+                switch (expr.Op.Type)
+                {
+                    case TokenType.SumAssignment:
+                        unit.Power += (int)(double)num; ; break;
+                    case TokenType.MinusAssignment:
+                        unit.Power -= (int)(double)num; break;
+                    case TokenType.ProductAssignment:
+                        unit.Power *= (int)(double)num; break;
+                    case TokenType.DivisionAssignment:
+                        unit.Power /= (int)(double)num; break;
+                    case TokenType.ModuloAssignment:
+                        unit.Power %= (int)(double)num; break;
+                }
+                result = unit.Power;
+
+            }
+            else if (obj is GameObject cardUI)
+            {
+                SetterPropertyIsPublic(cardUI.GetComponent<ThisCard>().thisCard, access);
+                switch (expr.Op.Type)
+                {
+                    case TokenType.SumAssignment:
+                        cardUI.GetComponent<ThisCard>().powerText.text = (int.Parse(cardUI.GetComponent<ThisCard>().powerText.text) + (int)(double)num).ToString(); break;
+                    case TokenType.MinusAssignment:
+                        cardUI.GetComponent<ThisCard>().powerText.text = (int.Parse(cardUI.GetComponent<ThisCard>().powerText.text) - (int)(double)num).ToString(); break;
+                    case TokenType.ProductAssignment:
+                        cardUI.GetComponent<ThisCard>().powerText.text = (int.Parse(cardUI.GetComponent<ThisCard>().powerText.text) * (int)(double)num).ToString(); break;
+                    case TokenType.DivisionAssignment:
+                        cardUI.GetComponent<ThisCard>().powerText.text = (int.Parse(cardUI.GetComponent<ThisCard>().powerText.text) / (int)(double)num).ToString(); break;
+                    case TokenType.ModuloAssignment:
+                        cardUI.GetComponent<ThisCard>().powerText.text = (int.Parse(cardUI.GetComponent<ThisCard>().powerText.text) % (int)(double)num).ToString(); break;
+                }
+                result = int.Parse(cardUI.GetComponent<ThisCard>().powerText.text);
+            }
+            else if (obj is Context) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"el descriptor de acceso de la propiedad {access} es inaccesible", 0, 0);
+            else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"{obj!.GetType()} no contiene un definicion para {access}", 0, 0);
+        }
+        else if (expr.Variable is IndexList indexList)
+        {
+            var i = evaluate(indexList.Index)!;
+            int index = (int)(double)i;
+            if (!(i is double)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "una lista se debe indexar mediante un valor entero", 0, 0);
+            var List = evaluate(indexList.List);
+            if (!(List is IList list)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"no se puede aplicar la indizacion a un tipo {List!.GetType()}", 0, 0);
+            else
+            {
+                SetterIndexerIsValid(list, index, num);
+                var value = (double)list[index]!;
+                switch (expr.Op.Type)
+                {
+                    case TokenType.SumAssignment:
+                        list[index] = value + (double)num; ; break;
+                    case TokenType.MinusAssignment:
+                        list[index] = value - (double)num; break;
+                    case TokenType.ProductAssignment:
+                        list[index] = value * (double)num; break;
+                    case TokenType.DivisionAssignment:
+                        list[index] = value / (double)num; break;
+                    case TokenType.ModuloAssignment:
+                        list[index] = value % (double)num; break;
+                }
+                result = (double)list[index];
+            }
+        }
+        else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "la parte izquierda de una asignacion debe ser una variable, una propiedad o un indizador", 0, 0);
+        return result;
     }
 
     public object? Visit(While @while)
@@ -444,27 +708,6 @@ public class Evaluador : IVsitor<object?>
 
     public object? Visit(ActionFun actionFun)
     {
-        bool[] parameters = new bool[2];
-        IList list;
-        Context context;
-        foreach (var param in actionFun.Parameters)
-        {
-            var parameter = evaluate(param);
-            if (parameter is IList)
-            {
-                list = (IList)parameter;
-                if (parameters[0] == false) parameters[0] = true;
-                else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "Action no posee ninguna sobrecarga con dos parametros IList", 0, 0);
-            }
-            else if (parameter is Context)
-            {
-                context = (Context)parameter;
-                if (parameters[1] == false) parameters[1] = true;
-                else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "Action no posee ninguna sobrecarga con dos parametros Context", 0, 0);
-            }
-            else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"Action no acepta argumentos de tipo {parameter!.GetType()}", 0, 0);
-        }
-
         EnterScope();
         foreach (var instruction in actionFun.Body)
         {
@@ -513,7 +756,7 @@ public class Evaluador : IVsitor<object?>
                 Debug.Log(sources.Count);
                 foreach (var card in sources)
                 {
-                    VariableScopes.Peek()[name] = card.GetComponent<ThisCard>().thisCard;
+                    VariableScopes.Peek()[name] = card;
                     var target = evaluate(predicate);
                     if (target != null) targets.Add(card);
                 }
@@ -523,7 +766,7 @@ public class Evaluador : IVsitor<object?>
                 sources = context.FilterOfCards(LocationCards.Hand, context.TriggerPlayer);
                 foreach (var card in sources)
                 {
-                    VariableScopes.Peek()[name] = card.GetComponent<ThisCard>().thisCard;
+                    VariableScopes.Peek()[name] = card;
                     var target = evaluate(predicate);
                     if (target != null) targets.Add(card);
                 }
@@ -533,14 +776,14 @@ public class Evaluador : IVsitor<object?>
                 sources = context.FilterOfCards(LocationCards.Hand, context.OtherPlayer);
                 foreach (var card in sources)
                 {
-                    VariableScopes.Peek()[name] = card.GetComponent<ThisCard>().thisCard;
+                    VariableScopes.Peek()[name] = card;
                     var target = evaluate(predicate);
                     if (target != null) targets.Add(card);
                 }
                 break;
             case "deck":
                 Debug.Log("source: deck");
-                cards = context.Deck(context.TriggerPlayer);
+                cards = context.GetDeck(context.TriggerPlayer);
                 foreach (var card in cards)
                 {
                     VariableScopes.Peek()[name] = card;
@@ -550,7 +793,7 @@ public class Evaluador : IVsitor<object?>
                 break;
             case "otherDeck":
                 Debug.Log("source: otherDeck");
-                cards = context.Deck(context.OtherPlayer);
+                cards = context.GetDeck(context.OtherPlayer);
                 foreach (var card in cards)
                 {
                     VariableScopes.Peek()[name] = card;
@@ -563,25 +806,36 @@ public class Evaluador : IVsitor<object?>
                 sources = context.FilterOfCards(LocationCards.Field, context.TriggerPlayer);
                 foreach (var card in sources)
                 {
-                    VariableScopes.Peek()[name] = card.GetComponent<ThisCard>().thisCard;
+                    VariableScopes.Peek()[name] = card;
                     var target = evaluate(predicate);
                     if (target != null) targets.Add(card);
                 }
                 break;
             case "otherField":
                 Debug.Log("source: otherField");
+                Debug.Log(context.OtherPlayer);
                 sources = context.FilterOfCards(LocationCards.Field, context.OtherPlayer);
                 foreach (var card in sources)
                 {
-                    VariableScopes.Peek()[name] = card.GetComponent<ThisCard>().thisCard;
+                    VariableScopes.Peek()[name] = card;
                     var target = evaluate(predicate);
                     if (target != null) targets.Add(card);
                 }
                 break;
             case "parent":
                 Debug.Log("source: parent");
+                Debug.Log(SelectorsList is null);
                 if (SelectorsList is null) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "No existe una fuente previamente definida", 0, 0);
-                else targets = SelectorsList;
+                else
+                {
+                    foreach (var card in SelectorsList)
+                    {
+                        VariableScopes.Peek()[name] = card;
+                        var target = evaluate(predicate);
+                        if (target != null) targets.Add(card);
+                    }
+                }
+                Debug.Log(targets.Count);
                 break;
         }
 
@@ -604,16 +858,16 @@ public class Evaluador : IVsitor<object?>
         string? name = evaluate(callEffect.Name) as string;
         if (name == null) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "el campo Name de un efecto es de tipo string", 0, 0);
         if (!Global.EffectsCreated.ContainsKey(name)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"El efecto {name} no esta definido", 0, 0);
-        Effect effect = Global.EffectsCreated[name];
+        Effect effect = (Effect)Global.EffectsCreated[name];
 
-        List<(string, object)> arguments = new List<(string, object)>();
+        Dictionary<string, object> arguments = new Dictionary<string, object>();
         if (effect.Params.Count != callEffect.Parameters.Count) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"El efecto {name} recibe {effect.Params.Count} argumentos", 0, 0);
         foreach (var assignment in callEffect.Parameters)
         {
             evaluate(assignment);
             Assignment? argument = assignment as Assignment;
             VariableReference? variable = argument!.Variable as VariableReference;
-            arguments.Add((variable!.Name, evaluate(variable)!));
+            arguments[variable!.Name] = evaluate(variable)!;
         }
 
         foreach (var declaration in effect.Params)
@@ -628,8 +882,7 @@ public class Evaluador : IVsitor<object?>
             if (source == null) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "el campo Source de un selector es de tipo string", 0, 0);
             if (!(evaluate(selector.Single) is bool)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "el campo Single de un Selector es de tipo booleano", 0, 0);
             if (!Global.Sources.Contains(source)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"la fuente {source} no esta definida", 0, 0);
-            Selectors[name] = (arguments, callEffect.Selector);
-
+            Selectors.Add((name, (arguments, callEffect.Selector)));
         }
         else SelectorsList = null;
         if (!(callEffect.PostAction is null))
@@ -679,8 +932,8 @@ public class Evaluador : IVsitor<object?>
         List<Skill> skills = new List<Skill>();
         foreach (var skill in Selectors)
         {
-            Debug.Log(skill.Key);
-            skills.Add(new Skill(skill.Key, skill.Value.Item1, skill.Value.Item2));
+            Debug.Log(skill.Item1);
+            skills.Add(new Skill(skill.Item1, skill.Item2.Item1, skill.Item2.Item2));
         }
         Card newCard = null!;
         //lider
@@ -714,7 +967,58 @@ public class Evaluador : IVsitor<object?>
 
     public object? Visit(IndexList indexList)
     {
-        throw new System.NotImplementedException();
+        var i = evaluate(indexList.Index)!;
+        int index = (int)(double)i;
+        if (!(i is double)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "una lista se debe indexar mediante un valor entero", 0, 0);
+        var List = evaluate(indexList.List);
+        if (!(List is IList)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"no se puede aplicar la indizacion a un tipo {List!.GetType()}", 0, 0);
+        else
+        {
+            return ((IList)List)[index];
+        }
     }
+
+    private void PropertyIsValid(ref string access, Property property, object? obj)
+    {
+        if (property.PropertyAccess is VariableReference variable)
+        {
+            access = variable.Name;
+            if (!TokenTypeExtensions.Properties.Contains(access)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"{obj!.GetType()} no contiene una definicion para {access}", 0, 0);
+            access = variable.Name;
+        }
+        else if (property.PropertyAccess is CallMethod method)
+        {
+            access = method.MethodName.Lexeme;
+            if (!TokenTypeExtensions.Methods.ContainsKey(access)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"{obj!.GetType()} no contiene una definicion para {access}", 0, 0);
+        }
+    }
+    private PropertyInfo PropertyIsValid(object obj, string access)
+    {
+        PropertyInfo? propertyInfo = obj.GetType().GetProperty(access);
+        if (propertyInfo is null) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"{obj!.GetType()} no contiene un definicion para {access}", 0, 0);
+        return propertyInfo;
+    }
+
+    private void SetterIndexerIsValid(IList list, int index, object value)
+    {
+        PropertyInfo IsReadOnly = list.GetType().GetProperty("IsReadOnly");
+        if (IsReadOnly != null) if ((bool)IsReadOnly.GetValue(list)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "la lista es de solo lectura", 0, 0);
+        if (list[index].GetType() != value.GetType()) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"no se puede convertir implicitamente del tipo {value.GetType()} a {list[index].GetType()}", 0, 0);
+    }
+    private void SetterPropertyIsPublic(object obj, string access)
+    {
+        PropertyInfo propertyInfo = PropertyIsValid(obj, access);
+        if (propertyInfo.CanWrite)
+        {
+            MethodInfo setMethod = propertyInfo.GetSetMethod(true);
+            if (setMethod.IsPublic)
+            {
+                return;
+            }
+            else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"el descriptor de acceso de la propiedad {access} es inaccesible", 0, 0);
+        }
+        else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"la propiedad {access} es de solo lectura", 0, 0);
+    }
+
 }
 

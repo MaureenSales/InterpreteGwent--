@@ -29,4 +29,5 @@ public interface IVsitor<T>
     T Visit(CallEffect callEffect);
     T Visit(CardDeclaration card);
     T Visit(IndexList indexList);
+
 }

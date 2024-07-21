@@ -15,6 +15,26 @@ effect
     };
    }
 }
+      card {
+      Type: "Plata",
+      Name: "SuperMell",
+      Faction: "Gryffindor",
+      Power: 7,
+      Range: [ "Melee"],
+      OnActivation: [
+ {
+   Effect: {
+           Name: "Damage",
+           Amount: 3,
+           },
+   Selector: {
+             Source: "otherField",
+             Single: false,
+             Predicate:
+             (unit) => unit.Faction == "Slytherin"
+             },
+            }]
+      }
 
 card {
       Type: "Plata",
@@ -29,31 +49,25 @@ card {
            Amount: 5,
            },
    Selector: {
-             Source: "field",
+             Source: "otherField",
              Single: false,
              Predicate:
-             (unit) => unit.Power > 3
+             (unit) => unit.Faction == "Gryffindor"
              },
-            }]
-      }
-
-      card {
-      Type: "Plata",
-      Name: "SuperMell",
-      Faction: "Gryffindor",
-      Power: 7,
-      Range: [ "Melee"],
-      OnActivation: [
- {
+   PostAction: {
+        {
    Effect: {
            Name: "Damage",
            Amount: 5,
            },
    Selector: {
-             Source: "otherField",
+             Source: "parent",
              Single: false,
              Predicate:
-             (unit) => unit.Name == "SuperJenn"
+             (unit) => unit.Name == "Arthur Weasley"
              },
-            }]
+            }
+   }
+ }
+            ]
       }

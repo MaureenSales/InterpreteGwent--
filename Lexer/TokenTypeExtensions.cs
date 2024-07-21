@@ -8,7 +8,7 @@ public class TokenTypeExtensions : MonoBehaviour
     public readonly static Dictionary<TokenType, string> TokenPatterns;
     public static readonly Dictionary<string, TokenType> KeywordsValues;
     public static readonly List<string> Properties;
-    public static readonly List<string> Methods;
+    public static readonly Dictionary<string, int> Methods;
 
     static TokenTypeExtensions()
     {
@@ -101,19 +101,19 @@ public class TokenTypeExtensions : MonoBehaviour
 
            };
 
-        Methods = new List<string>()
+        Methods = new Dictionary<string, int>()
            {
-                "Pop",
-                "Add",
-                "Shuffle",
-                "DeckOfPlayer",
-                "HandOfPlayer",
-                "FieldOfPlayer",
-                "GraveyardOfPlayer",
-                "Push",
-                "Remove",
-                "Find",
-                "SendBottom",
+                {"Pop", 0},
+                {"Add", 1},
+                {"Shuffle", 0},
+                {"DeckOfPlayer", 1},
+                {"HandOfPlayer", 1},
+                {"FieldOfPlayer", 1},
+                {"GraveyardOfPlayer", 1},
+                {"Push", 1},
+                {"Remove", 1},
+                {"Find", 1},
+                {"SendBottom", 1},
            };
     }
 

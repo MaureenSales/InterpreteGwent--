@@ -86,7 +86,7 @@ public class PrintASTnode : IVsitor<string>
 
     public string Visit(UnaryInverseOp unaryInverseOp)
     {
-        return $"({Print(unaryInverseOp.Left)} {unaryInverseOp.Op.Lexeme})";
+        return $"({Print(unaryInverseOp.Left)} {unaryInverseOp.Op.Lexeme}) UnaryI";
     }
 
     public string Visit(PredicateLambda predicateLambda)
@@ -209,4 +209,5 @@ public class PrintASTnode : IVsitor<string>
     {
         return $"({Print(indexList.List)} [{Print(indexList.Index)}])";
     }
+
 }
