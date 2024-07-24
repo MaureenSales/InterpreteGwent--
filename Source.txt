@@ -1,3 +1,4 @@
+
 effect
 {
     Name: "Damage",
@@ -8,13 +9,48 @@ effect
     Action: (targets, context) => {
     for target in targets
     {
-       i = 0;
-       while(i++ < Amount)
-       target.Power -= 1;
-
+       target.Power -= Amount;
     };
    }
 }
+effect
+{
+    Name: "Draw",
+    Action: (targets, context) => {
+        topCard = context.Deck.Pop();
+        context.Hand.Add(topCard);
+   }
+}
+
+effect
+{
+    Name: "ReturnToDeck",
+    Action: (targets, context) => {
+    for target in targets
+    {
+      owner = target.Owner;
+      deck = context.DeckOfPlayer(owner);
+      deck.Push(target);
+      deck.Shuffle();
+      context.Board.Remove(target);
+    };
+   }
+}
+
+effect
+{
+    Name: "TakeOutToHand",
+    Action: (targets, context) => {
+    for target in targets
+    {
+      owner = target.Owner;
+      field = context.FieldOfPlayer(owner);
+      field.Push(target);
+      context.HandOfPlayer(owner).Remove(target);
+    };
+   }
+}
+
       card {
       Type: "Plata",
       Name: "SuperMell",
@@ -22,18 +58,17 @@ effect
       Power: 7,
       Range: [ "Melee"],
       OnActivation: [
- {
-   Effect: {
-           Name: "Damage",
-           Amount: 3,
+        {
+        Effect: {
+           Name: "TakeOutToHand",
            },
    Selector: {
-             Source: "otherField",
+             Source: "otherHand",
              Single: false,
              Predicate:
-             (unit) => unit.Faction == "Slytherin"
-             },
-            }]
+             (unit) => unit.Power == 7
+             },}
+      ]
       }
 
 card {

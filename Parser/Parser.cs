@@ -662,7 +662,7 @@ public class Parser : MonoBehaviour
         while (Match(TokenType.Dot))
         {
             position++;
-            if (Match(TokenType.Power, TokenType.Faction, TokenType.Name, TokenType.Type))
+            if (Match(TokenType.Power, TokenType.Faction, TokenType.Name, TokenType.Type, TokenType.Owner))
             {
                 left = new Property(left, new VariableReference(Advance()));
             }
