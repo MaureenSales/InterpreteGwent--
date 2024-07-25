@@ -79,25 +79,29 @@ public class Context
         Transform location = listingLocation[cards];
         if (!CanStoreCard(cards, card))
         {
-            if (card is GameObject cardUI)
+            if (card is GameObject cardUi)
             {
-                Card newCard = cardUI.GetComponent<ThisCard>().thisCard;
+                Card newCard = cardUi.GetComponent<ThisCard>().thisCard;
                 if (newCard.Owner == TriggerPlayer) controller.currentTurn.GetComponent<Player>().MyDeck.cards.Insert(0, newCard);
                 else controller.notCurrentTurn.GetComponent<Player>().MyDeck.cards.Insert(0, newCard);
                 cards.Insert(0, newCard);
+                return;
             }
             else
             {
                 GameObject newCard = GameObject.Instantiate(controller.CardPrefab, new Vector3(0, 0, 0), Quaternion.identity);
                 newCard.GetComponent<ThisCard>().PrintCard((Card)card);
-                if (!(location.name is "Hand")) newCard.GetComponent<Drag>().enabled = false;
-                newCard.transform.SetParent(listingLocation[cards]);
-                newCard.transform.localScale = new Vector3(0.9f, 0.9f, 0f);
-                cards.Insert(0, newCard);
+                card = newCard;
             }
         }
-        else if (card is GameObject cardUI)
+
+        if (card is GameObject cardUI)
         {
+            if (cardUI.GetComponent<ThisCard>().thisCard is Unit unit)
+            {
+                cardUI.GetComponent<ThisCard>().power = unit.Power.ToString();
+                cardUI.GetComponent<ThisCard>().powerText.text = unit.Power.ToString();
+            }
             if (cards.Contains(card)) return;
             switch (location.name)
             {
@@ -122,24 +126,37 @@ public class Context
                     await Task.Delay(1000); break;
                 case "EnemyField":
                 case "PlayerField":
+                    cardUI.transform.localScale = new Vector3(0.55f, 0.55f, 0);
                     if (cardUI.GetComponent<ThisCard>().thisCard.Owner != location.parent.GetComponent<Player>().Id) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "no se puede colocar una carta propia en el campo rival o viceversa", 0, 0);
-                    if (cardUI.GetComponent<ThisCard>().thisCard is UnitCard unit)
+                    if (cardUI.GetComponent<ThisCard>().thisCard is UnitCard unitCard)
                     {
-                        if (unit.AttackTypes.Contains(Global.AttackModes.Melee))
+                        if (unitCard.AttackTypes.Contains(Global.AttackModes.Melee))
                         {
                             cardUI.transform.SetParent(location.GetChild(1).GetChild(0));
                             //LeanTween.move(cardUI, location.GetChild(1).GetChild(0).position, 1f).setOnComplete(() => cardUI.transform.SetParent(location.GetChild(1).GetChild(0)));
                             location.GetChild(1).GetComponentInChildren<Row>().InsertInRow(0, cardUI);
                             location.GetChild(1).GetComponentInChildren<SumPower>().UpdatePower();
                             cardUI.GetComponent<Drag>().enabled = false;
+                            controller.Effects(cardUI);
+                            if (!(unitCard is HeroUnit))
+                            {
+                                GameObject.Find("WeatherZone").GetComponent<WeatherController>().WeatherEffect(cardUI, cardUI.transform.parent);
+                                controller.Improve(cardUI, "Melee");
+                            }
                         }
-                        else if (unit.AttackTypes.Contains(Global.AttackModes.Ranged))
+                        else if (unitCard.AttackTypes.Contains(Global.AttackModes.Ranged))
                         {
                             cardUI.transform.SetParent(location.GetChild(2).GetChild(0));
                             //LeanTween.move(cardUI, location.GetChild(2).GetChild(0).position, 1f).setOnComplete(() => cardUI.transform.SetParent(location.GetChild(2).GetChild(0)));
                             location.GetChild(2).GetComponentInChildren<Row>().InsertInRow(0, cardUI);
                             location.GetChild(2).GetComponentInChildren<SumPower>().UpdatePower();
                             cardUI.GetComponent<Drag>().enabled = false;
+                            controller.Effects(cardUI);
+                            if (!(unitCard is HeroUnit))
+                            {
+                                GameObject.Find("WeatherZone").GetComponent<WeatherController>().WeatherEffect(cardUI, cardUI.transform.parent);
+                                controller.Improve(cardUI, "Ranged");
+                            }
                         }
                         else
                         {
@@ -148,11 +165,18 @@ public class Context
                             location.GetChild(3).GetComponentInChildren<Row>().InsertInRow(0, cardUI);
                             location.GetChild(3).GetComponentInChildren<SumPower>().UpdatePower();
                             cardUI.GetComponent<Drag>().enabled = false;
+                            controller.Effects(cardUI);
+                            if (!(unitCard is HeroUnit))
+                            {
+                                GameObject.Find("WeatherZone").GetComponent<WeatherController>().WeatherEffect(cardUI, cardUI.transform.parent);
+                                controller.Improve(cardUI, "Siege");
+                            }
                         }
                     }
                     else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"una carta de tipo {cardUI.GetComponent<ThisCard>().thisCard.Type} no puede colocarse en una fila", 0, 0);
                     await Task.Delay(1000); break;
                 case "Canvas":
+                    cardUI.transform.localScale = new Vector3(0.55f, 0.55f, 0);
                     if (cardUI.GetComponent<ThisCard>().thisCard is UnitCard unit1)
                     {
                         Transform newLocation;
@@ -165,6 +189,12 @@ public class Context
                             newLocation.GetChild(1).GetComponentInChildren<Row>().InsertInRow(0, cardUI);
                             newLocation.GetChild(1).GetComponentInChildren<SumPower>().UpdatePower();
                             cardUI.GetComponent<Drag>().enabled = false;
+                            controller.Effects(cardUI);
+                            if (!(unit1 is HeroUnit))
+                            {
+                                GameObject.Find("WeatherZone").GetComponent<WeatherController>().WeatherEffect(cardUI, cardUI.transform.parent);
+                                controller.Improve(cardUI, "Melee");
+                            }
                         }
                         else if (unit1.AttackTypes.Contains(Global.AttackModes.Ranged))
                         {
@@ -173,6 +203,12 @@ public class Context
                             newLocation.GetChild(2).GetComponentInChildren<Row>().InsertInRow(0, cardUI);
                             newLocation.GetChild(2).GetComponentInChildren<SumPower>().UpdatePower();
                             cardUI.GetComponent<Drag>().enabled = false;
+                            controller.Effects(cardUI);
+                            if (!(unit1 is HeroUnit))
+                            {
+                                GameObject.Find("WeatherZone").GetComponent<WeatherController>().WeatherEffect(cardUI, cardUI.transform.parent);
+                                controller.Improve(cardUI, "Ranged");
+                            }
                         }
                         else
                         {
@@ -181,6 +217,12 @@ public class Context
                             newLocation.GetChild(3).GetComponentInChildren<Row>().InsertInRow(0, cardUI);
                             newLocation.GetChild(3).GetComponentInChildren<SumPower>().UpdatePower();
                             cardUI.GetComponent<Drag>().enabled = false;
+                            controller.Effects(cardUI);
+                            if (!(unit1 is HeroUnit))
+                            {
+                                GameObject.Find("WeatherZone").GetComponent<WeatherController>().WeatherEffect(cardUI, cardUI.transform.parent);
+                                controller.Improve(cardUI, "Siege");
+                            }
                         }
                     }
                     else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"una carta de tipo {cardUI.GetComponent<ThisCard>().thisCard.Type} no puede colocarse en una fila", 0, 0);
@@ -201,27 +243,31 @@ public class Context
         Transform location = listingLocation[cards];
         if (!CanStoreCard(cards, card))
         {
-            if (card is GameObject cardUI)
+            if (card is GameObject cardUi)
             {
-                Card newCard = cardUI.GetComponent<ThisCard>().thisCard;
-                GameObject.Destroy(cardUI);
+                Card newCard = cardUi.GetComponent<ThisCard>().thisCard;
                 if (newCard.Owner == TriggerPlayer) controller.currentTurn.GetComponent<Player>().MyDeck.cards.Insert(0, newCard);
                 else controller.notCurrentTurn.GetComponent<Player>().MyDeck.cards.Insert(0, newCard);
-                cards.Insert(0, newCard);
+                cards.Add(newCard);
+                return;
             }
             else
             {
+                Debug.Log("deberia entar aqui");
                 GameObject newCard = GameObject.Instantiate(controller.CardPrefab, new Vector3(0, 0, 0), Quaternion.identity);
                 newCard.GetComponent<ThisCard>().PrintCard((Card)card);
-                newCard.transform.SetParent(location);
-                if (!(location.name is "Hand")) newCard.GetComponent<Drag>().enabled = false;
-                newCard.transform.localScale = new Vector3(0.9f, 0.9f, 0f);
-                cards.Add(newCard);
-
+                card = newCard;
             }
         }
-        else if (card is GameObject cardUI)
+
+        if (card is GameObject cardUI)
         {
+            Debug.Log("luego aqui");
+            if (cardUI.GetComponent<ThisCard>().thisCard is Unit unit)
+            {
+                cardUI.GetComponent<ThisCard>().power = unit.Power.ToString();
+                cardUI.GetComponent<ThisCard>().powerText.text = unit.Power.ToString();
+            }
             if (cards.Contains(card)) return;
             switch (location.name)
             {
@@ -243,23 +289,37 @@ public class Context
                 case "EnemyField":
                 case "PlayerField":
                     if (cardUI.GetComponent<ThisCard>().thisCard.Owner != location.parent.GetComponent<Player>().Id) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "no se puede colocar una carta propia en el campo rival o viceversa", 0, 0);
-                    if (cardUI.GetComponent<ThisCard>().thisCard is UnitCard unit)
+                    cardUI.transform.localScale = new Vector3(0.55f, 0.55f, 0);
+                    if (cardUI.GetComponent<ThisCard>().thisCard is UnitCard unitCard)
                     {
-                        if (unit.AttackTypes.Contains(Global.AttackModes.Melee))
+                        if (unitCard.AttackTypes.Contains(Global.AttackModes.Melee))
                         {
                             cardUI.transform.SetParent(location.GetChild(1).GetChild(0));
                             //LeanTween.move(cardUI, location.GetChild(1).GetChild(0).position, 1f).setOnComplete(() => cardUI.transform.SetParent(location.GetChild(1).GetChild(0)));
                             location.GetChild(1).GetComponentInChildren<Row>().AddToRow(cardUI);
                             location.GetChild(1).GetComponentInChildren<SumPower>().UpdatePower();
                             cardUI.GetComponent<Drag>().enabled = false;
+                            controller.Effects(cardUI);
+                            if (!(unitCard is HeroUnit))
+                            {
+                                Debug.Log("putUnitPlata");
+                                GameObject.Find("WeatherZone").GetComponent<WeatherController>().WeatherEffect(cardUI, cardUI.transform.parent);
+                                controller.Improve(cardUI, "Melee");
+                            }
                         }
-                        else if (unit.AttackTypes.Contains(Global.AttackModes.Ranged))
+                        else if (unitCard.AttackTypes.Contains(Global.AttackModes.Ranged))
                         {
                             cardUI.transform.SetParent(location.GetChild(2).GetChild(0));
                             //LeanTween.move(cardUI, location.GetChild(2).GetChild(0).position, 1f).setOnComplete(() => cardUI.transform.SetParent(location.GetChild(2).GetChild(0)));
                             location.GetChild(2).GetComponentInChildren<Row>().AddToRow(cardUI);
                             location.GetChild(2).GetComponentInChildren<SumPower>().UpdatePower();
                             cardUI.GetComponent<Drag>().enabled = false;
+                            controller.Effects(cardUI);
+                            if (!(unitCard is HeroUnit))
+                            {
+                                GameObject.Find("WeatherZone").GetComponent<WeatherController>().WeatherEffect(cardUI, cardUI.transform.parent);
+                                controller.Improve(cardUI, "Ranged");
+                            }
                         }
                         else
                         {
@@ -268,11 +328,18 @@ public class Context
                             location.GetChild(3).GetComponentInChildren<Row>().AddToRow(cardUI);
                             location.GetChild(3).GetComponentInChildren<SumPower>().UpdatePower();
                             cardUI.GetComponent<Drag>().enabled = false;
+                            controller.Effects(cardUI);
+                            if (!(unitCard is HeroUnit))
+                            {
+                                GameObject.Find("WeatherZone").GetComponent<WeatherController>().WeatherEffect(cardUI, cardUI.transform.parent);
+                                controller.Improve(cardUI, "Siege");
+                            }
                         }
                     }
                     else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"una carta de tipo {cardUI.GetComponent<ThisCard>().thisCard.Type} no puede colocarse en una fila", 0, 0);
                     await Task.Delay(1000); break;
                 case "Canvas":
+                    cardUI.transform.localScale = new Vector3(0.55f, 0.55f, 0);
                     if (cardUI.GetComponent<ThisCard>().thisCard is UnitCard unit1)
                     {
                         Transform newLocation;
@@ -285,6 +352,12 @@ public class Context
                             newLocation.GetChild(1).GetComponentInChildren<Row>().AddToRow(cardUI);
                             newLocation.GetChild(1).GetComponentInChildren<SumPower>().UpdatePower();
                             cardUI.GetComponent<Drag>().enabled = false;
+                            controller.Effects(cardUI);
+                            if (!(unit1 is HeroUnit))
+                            {
+                                GameObject.Find("WeatherZone").GetComponent<WeatherController>().WeatherEffect(cardUI, cardUI.transform.parent);
+                                controller.Improve(cardUI, "Melee");
+                            }
                         }
                         else if (unit1.AttackTypes.Contains(Global.AttackModes.Ranged))
                         {
@@ -293,6 +366,12 @@ public class Context
                             newLocation.GetChild(2).GetComponentInChildren<Row>().AddToRow(cardUI);
                             newLocation.GetChild(2).GetComponentInChildren<SumPower>().UpdatePower();
                             cardUI.GetComponent<Drag>().enabled = false;
+                            controller.Effects(cardUI);
+                            if (!(unit1 is HeroUnit))
+                            {
+                                GameObject.Find("WeatherZone").GetComponent<WeatherController>().WeatherEffect(cardUI, cardUI.transform.parent);
+                                controller.Improve(cardUI, "Ranged");
+                            }
                         }
                         else
                         {
@@ -301,6 +380,12 @@ public class Context
                             newLocation.GetChild(3).GetComponentInChildren<Row>().AddToRow(cardUI);
                             newLocation.GetChild(3).GetComponentInChildren<SumPower>().UpdatePower();
                             cardUI.GetComponent<Drag>().enabled = false;
+                            controller.Effects(cardUI);
+                            if (!(unit1 is HeroUnit))
+                            {
+                                GameObject.Find("WeatherZone").GetComponent<WeatherController>().WeatherEffect(cardUI, cardUI.transform.parent);
+                                controller.Improve(cardUI, "Siege");
+                            }
                         }
                     }
                     else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"una carta de tipo {cardUI.GetComponent<ThisCard>().thisCard.Type} no puede colocarse en una fila", 0, 0);
@@ -328,10 +413,17 @@ public class Context
 
             if (card is GameObject cardUI)
             {
-                if (location.name == "Graveyard") throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "no puede remover una carta del cementerio", 0, 0);
-
+                if (cardUI.GetComponent<ThisCard>().thisCard is Unit unit)
+                {
+                    cardUI.GetComponent<ThisCard>().power = unit.Power.ToString();
+                    cardUI.GetComponent<ThisCard>().powerText.text = unit.Power.ToString();
+                }
                 switch (location.name)
                 {
+                    case "Graveyard":
+                        location.GetComponent<Graveyard>().CardsObject.Remove(cardUI);
+                        location.GetComponent<Graveyard>().Cards.Remove(cardUI.GetComponent<ThisCard>().thisCard);
+                        await Task.Delay(1000); break;
                     case "Hand":
                         if (cardUI.transform.parent == location) MoveGraveyard(cardUI);
                         location.GetComponent<Hand>().CardsObject.Remove(cardUI);

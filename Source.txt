@@ -13,14 +13,7 @@ effect
     };
    }
 }
-effect
-{
-    Name: "Draw",
-    Action: (targets, context) => {
-        topCard = context.Deck.Pop();
-        context.Hand.Add(topCard);
-   }
-}
+
 
 effect
 {
@@ -51,6 +44,21 @@ effect
    }
 }
 
+
+ effect
+{
+    Name: "RenaceElMonstruo",
+    Action: (targets, context) => {
+      seleccionadas = context.Graveyard.Find((unit) => unit.Power == 3);
+      board = context.Board;
+      for target in seleccionadas
+      {
+        board.Push(target);
+        context.Graveyard.Remove(target);
+      };
+   }
+}
+
       card {
       Type: "Plata",
       Name: "SuperMell",
@@ -59,17 +67,68 @@ effect
       Range: [ "Melee"],
       OnActivation: [
         {
-        Effect: {
-           Name: "TakeOutToHand",
-           },
-   Selector: {
-             Source: "otherHand",
-             Single: false,
-             Predicate:
-             (unit) => unit.Power == 7
-             },}
+        Effect: "RenaceElMonstruo"
+        }
       ]
       }
+
+effect
+{
+    Name: "Draw",
+    Action: (targets, context) => {
+        topCard = context.Deck.Pop();
+        context.Hand.Add(topCard);
+   }
+}
+
+      effect
+{
+    Name: "PutUnit",
+    Action: (targets, context) => {
+    for target in targets
+    {
+      field = context.Field;
+      field.SendBottom(target);
+      context.Deck.Remove(target);
+    };
+   }
+}
+      card {
+      Type: "Plata",
+      Name: "SuperMau",
+      Faction: "Gryffindor",
+      Power: 6,
+      Range: [ "Melee"],
+      OnActivation: [
+        {
+        Effect: 
+        {
+          Name: "PutUnit",
+        },
+        Selector: 
+        {
+          Source: "deck",
+          Single: false,
+          Predicate: (unit) => unit.Power >= 7
+        },
+        }
+      ]
+      }
+      card {
+      Type: "Plata",
+      Name: "SuperMell",
+      Faction: "Gryffindor",
+      Power: 7,
+      Range: [ "Melee"],
+      OnActivation: [
+        {
+        Effect: "Draw"
+        }
+      ]
+      }
+
+      
+      
 
 card {
       Type: "Plata",

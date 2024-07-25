@@ -662,7 +662,7 @@ public class Parser : MonoBehaviour
         while (Match(TokenType.Dot))
         {
             position++;
-            if (Match(TokenType.Power, TokenType.Faction, TokenType.Name, TokenType.Type, TokenType.Owner))
+            if (Match(TokenType.Power, TokenType.Faction, TokenType.Name, TokenType.Type))
             {
                 left = new Property(left, new VariableReference(Advance()));
             }
@@ -680,7 +680,7 @@ public class Parser : MonoBehaviour
                         left = Indexer(new Property(left, new VariableReference(Advance())));
                         break;
                     default:
-                        left = new VariableReference(Advance());
+                        left = new Property(left, new VariableReference(Advance()));
                         break;
                 }
             }

@@ -323,6 +323,11 @@ public class Evaluador : IVsitor<object?>
             if (!find)
             {
                 Debug.Log(variable1.Name + "=" + value);
+                IList list = (IList)value;
+                foreach (var item in list)
+                {
+                    Debug.Log(item);
+                }
                 VariableScopes.Peek().Add(variable1.Name, value);
             }
         }
@@ -478,6 +483,8 @@ public class Evaluador : IVsitor<object?>
                 return location.Item1;
             case "Push":
                 if (listForMethod is null) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "el metodo Push no esta definido", 0, 0);
+                Debug.Log(callMethod.Arguments[0].GetType());
+                Debug.Log(evaluate(callMethod.Arguments[0]));
                 object? card1 = evaluate(callMethod.Arguments[0]);
                 if (!(card1 is GameObject) && !(card1 is Card)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"ninguna sobrecarga de Push recibe un argumento de tipo {card1!.GetType()}", 0, 0);
                 context.Push(card1, listForMethod, ListingLocation);
@@ -497,7 +504,7 @@ public class Evaluador : IVsitor<object?>
                 {
                     VariableScopes.Peek()[unit!.Name] = element;
                     var target = evaluate(predicate);
-                    if (target != null) result.Add(unit);
+                    if (target != null) result.Add(target);
                 }
                 ListingLocation[result] = ListingLocation[listForMethod];
                 ExitScope();
@@ -727,7 +734,9 @@ public class Evaluador : IVsitor<object?>
         EnterScope();
         var element = @for.Element as VariableReference;
         VariableScopes.Peek().Add(element!.Name, null);
+        Debug.Log(element!.Name);
         var list = evaluate(@for.Collection);
+        Debug.Log(@for.Collection.GetType());
         if (list is IList collection)
         {
             foreach (var item in collection)

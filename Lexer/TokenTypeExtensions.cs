@@ -63,7 +63,6 @@ public class TokenTypeExtensions : MonoBehaviour
                 {"Action", TokenType.Action},
                 {"Bool", TokenType.Bool},
                 {"Type", TokenType.Type},
-                {"Owner", TokenType.Owner},
                 {"Faction", TokenType.Faction},
                 {"Power", TokenType.Power},
                 {"Range", TokenType.Range},
@@ -133,7 +132,7 @@ public enum TokenType
     MinusAssignment, DivisionAssignment, ProductAssignment, ModuloAssignment,
 
     //keywords
-    Name, Params, Action, Bool, Targets, Context, Type, Faction, Power, Range, Card, Find, Owner,
+    Name, Params, Action, Bool, Targets, Context, Type, Faction, Power, Range, Card, Find,
     OnActivation, Effect, effect, Selector, Source, Single, True, False, Predicate, PostAction, For, While, Amount, In, TypeNumber, TypeString,
 
     //constants
