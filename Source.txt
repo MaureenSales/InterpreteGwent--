@@ -45,6 +45,7 @@ effect
 }
 
 
+
  effect
 {
     Name: "RenaceElMonstruo",
@@ -53,21 +54,31 @@ effect
       board = context.Board;
       for target in seleccionadas
       {
-        board.Push(target);
         context.Graveyard.Remove(target);
+        board.Push(target);
       };
+   }
+}
+effect
+{
+    Name: "TakeOutToHand",
+    Action: (targets, context) => {
+      target = context.Hand[0];
+      context.Hand.Remove(target);
+      field = context.Field;
+      field.Push(target);
    }
 }
 
       card {
-      Type: "Plata",
-      Name: "SuperMell",
-      Faction: "Gryffindor",
+      Type: "Lider",
+      Name: "LeaderRavenclaw",
+      Faction: "Ravenclaw",
       Power: 7,
       Range: [ "Melee"],
       OnActivation: [
         {
-        Effect: "RenaceElMonstruo"
+        Effect: "TakeOutToHand"
         }
       ]
       }
@@ -140,10 +151,10 @@ card {
  {
    Effect: {
            Name: "Damage",
-           Amount: 5,
+           Amount: 1,
            },
    Selector: {
-             Source: "otherField",
+             Source: "parent",
              Single: false,
              Predicate:
              (unit) => unit.Faction == "Gryffindor"
@@ -151,8 +162,7 @@ card {
    PostAction: {
         {
    Effect: {
-           Name: "Damage",
-           Amount: 5,
+           Name: "ReturnToDeck",
            },
    Selector: {
              Source: "parent",

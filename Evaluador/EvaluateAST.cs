@@ -14,7 +14,7 @@ public class Evaluador : IVsitor<object?>
     public List<object>? SelectorsList;
     private IList? listForMethod;
     private Dictionary<IList, Transform> ListingLocation;
-
+    private bool IsPostAction = false;
 
     public Evaluador()
     {
@@ -239,8 +239,8 @@ public class Evaluador : IVsitor<object?>
         object? left = evaluate(expr.Left);
         object? right = evaluate(expr.Right);
         Debug.Log(left + " compareTo " + right);
-        if(left is int || left is float) left = Convert.ToDouble(left);
-        if(right is int || right is float) right = Convert.ToDouble(right);
+        if (left is int || left is float) left = Convert.ToDouble(left);
+        if (right is int || right is float) right = Convert.ToDouble(right);
         switch (expr.Op.Type)
         {
             case TokenType.LessThan:
@@ -323,11 +323,7 @@ public class Evaluador : IVsitor<object?>
             if (!find)
             {
                 Debug.Log(variable1.Name + "=" + value);
-                IList list = (IList)value;
-                foreach (var item in list)
-                {
-                    Debug.Log(item);
-                }
+
                 VariableScopes.Peek().Add(variable1.Name, value);
             }
         }
@@ -592,7 +588,7 @@ public class Evaluador : IVsitor<object?>
     {
         var target = evaluate(predicateLambda.Parameter);
         if (!(evaluate(predicateLambda.BodyPredicate) is bool condition)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "Un predicado debe devolver un booleano", 0, 0);
-        else if (condition) { Debug.Log("isTRue"); return target;}
+        else if (condition) { Debug.Log("isTRue"); return target; }
         else return null;
     }
 
@@ -956,6 +952,7 @@ public class Evaluador : IVsitor<object?>
             Selector? selector = callEffect.Selector as Selector;
             string? source = evaluate(selector!.Source) as string;
             if (source == null) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "el campo Source de un selector es de tipo string", 0, 0);
+            else if (source == "parent" && !IsPostAction) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "la fuente parent solo puede ser declarada en un PostAction", 0, 0);
             if (!(evaluate(selector.Single) is bool)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "el campo Single de un Selector es de tipo booleano", 0, 0);
             if (!Global.Sources.Contains(source)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"la fuente {source} no esta definida", 0, 0);
             Selectors.Add((name, (arguments, callEffect.Selector)));
@@ -965,9 +962,12 @@ public class Evaluador : IVsitor<object?>
             SelectorsList = null;
             Selectors.Add((name, (null, null)));
         }
+
         if (!(callEffect.PostAction is null))
         {
+            IsPostAction = true;
             evaluate(callEffect.PostAction);
+            IsPostAction = false;
         }
 
 
@@ -1023,26 +1023,42 @@ public class Evaluador : IVsitor<object?>
                 newCard = new HeroUnit(name, Faction, skills, "", (int)power, attackModes, Resources.Load<Sprite>("image"));
                 break;
             case "Plata":
-            Debug.Log(skills.Count);
+                Debug.Log(skills.Count);
                 newCard = new Unit(name, Faction, skills, "", (int)power, attackModes, Resources.Load<Sprite>("image"));
                 break;
             case "Lider":
+                newCard = new Leader(name, Faction, skills, "", Resources.Load<Sprite>("image"));
+                CardDataBase.Leaders.Add(Faction, (Leader)newCard);
+                if (Faction == Global.Factions.Ravenclaw)
+                {
+                    CardDataBase.Ravenclaw = new Deck((Leader)newCard);
+                    foreach (var item in CardDataBase.Neutral) CardDataBase.Ravenclaw.AddCard(item);
+                    foreach (var item in CardDataBase.Specials) CardDataBase.Ravenclaw.AddCard(item);
+                    CardDataBase.Decks.Add(Global.Factions.Ravenclaw, CardDataBase.Ravenclaw);
+                }
+                else
+                {
+                    CardDataBase.Hufflepuff = new Deck((Leader)newCard);
+                    foreach (var item in CardDataBase.Neutral) CardDataBase.Hufflepuff.AddCard(item);
+                    foreach (var item in CardDataBase.Specials) CardDataBase.Hufflepuff.AddCard(item);
+                    CardDataBase.Decks.Add(Global.Factions.Hufflepuff, CardDataBase.Hufflepuff);
+                }
                 break;
             case "Aumento":
-                newCard = new Boost(name, skills, "", Resources.Load<Sprite>("image"));
+                newCard = new Boost(name, new List<Skill>() { new Skill("Boost", null, null) }, "", Resources.Load<Sprite>("image"));
                 break;
             case "Clima":
-                newCard = new Weather(name, skills, "", Resources.Load<Sprite>("image"), Resources.Load<Sprite>("Frost"));
+                newCard = new Weather(name, new List<Skill>() { new Skill("WeatherMelee", null, null) }, "", Resources.Load<Sprite>("image"), Resources.Load<Sprite>("Frost"));
                 break;
             case "Despeje":
-                newCard = new Clear(name, skills, "", Resources.Load<Sprite>("image"));
+                newCard = new Clear(name, new List<Skill>() { new Skill("ClearWeather", null, null) }, "", Resources.Load<Sprite>("image"));
                 break;
         }
         Debug.Log(CardDataBase.Decks.Count);
-        foreach (var deck in CardDataBase.Decks.Values)
-        {
-            deck.AddCard(newCard);
-        }
+        if(Faction == Global.Factions.Neutral && newCard is UnitCard unitCard) CardDataBase.Neutral.Add(unitCard);
+        else if (Faction == Global.Factions.Neutral) CardDataBase.Specials.Add((SpecialCard)newCard);
+        
+        foreach (var deck in CardDataBase.Decks.Values) deck.AddCard(newCard);
         return null;
     }
 
