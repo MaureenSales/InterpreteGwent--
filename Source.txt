@@ -125,10 +125,11 @@ effect
         }
       ]
       }
+      
       card {
-      Type: "Plata",
-      Name: "SuperMell",
-      Faction: "Gryffindor",
+      Type: "Despeje",
+      Name: "nuevoDespeje",
+      Faction: "Neutral",
       Power: 7,
       Range: [ "Melee"],
       OnActivation: [
