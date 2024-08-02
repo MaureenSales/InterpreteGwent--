@@ -73,7 +73,7 @@ effect
       card {
       Type: "Lider",
       Name: "LeaderRavenclaw",
-      Faction: "Ravenclaw",
+      Faction: "Gryffindor",
       Power: 7,
       Range: [ "Melee"],
       OnActivation: [

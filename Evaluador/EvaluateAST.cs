@@ -1028,20 +1028,27 @@ public class Evaluador : IVsitor<object?>
                 break;
             case "Lider":
                 newCard = new Leader(name, Faction, skills, "", Resources.Load<Sprite>("image"));
-                CardDataBase.Leaders.Add(Faction, (Leader)newCard);
-                if (Faction == Global.Factions.Ravenclaw)
+                CardDataBase.Leaders[Faction] = (Leader)newCard;
+                switch (Faction)
                 {
-                    CardDataBase.Ravenclaw = new Deck((Leader)newCard);
-                    foreach (var item in CardDataBase.Neutral) CardDataBase.Ravenclaw.AddCard(item);
-                    foreach (var item in CardDataBase.Specials) CardDataBase.Ravenclaw.AddCard(item);
-                    CardDataBase.Decks.Add(Global.Factions.Ravenclaw, CardDataBase.Ravenclaw);
-                }
-                else
-                {
-                    CardDataBase.Hufflepuff = new Deck((Leader)newCard);
-                    foreach (var item in CardDataBase.Neutral) CardDataBase.Hufflepuff.AddCard(item);
-                    foreach (var item in CardDataBase.Specials) CardDataBase.Hufflepuff.AddCard(item);
-                    CardDataBase.Decks.Add(Global.Factions.Hufflepuff, CardDataBase.Hufflepuff);
+                    case Global.Factions.Gryffindor:
+                        CardDataBase.Gryffindor.Leader = (Leader)newCard;
+                        break;
+                    case Global.Factions.Slytherin:
+                        CardDataBase.Slytherin.Leader = (Leader)newCard;
+                        break;
+                    case Global.Factions.Ravenclaw:
+                        CardDataBase.Ravenclaw = new Deck((Leader)newCard);
+                        foreach (var item in CardDataBase.Neutral) CardDataBase.Ravenclaw.AddCard(item);
+                        foreach (var item in CardDataBase.Specials) CardDataBase.Ravenclaw.AddCard(item);
+                        CardDataBase.Decks.Add(Global.Factions.Ravenclaw, CardDataBase.Ravenclaw);
+                        break;
+                    case Global.Factions.Hufflepuff:
+                        CardDataBase.Hufflepuff = new Deck((Leader)newCard);
+                        foreach (var item in CardDataBase.Neutral) CardDataBase.Hufflepuff.AddCard(item);
+                        foreach (var item in CardDataBase.Specials) CardDataBase.Hufflepuff.AddCard(item);
+                        CardDataBase.Decks.Add(Global.Factions.Hufflepuff, CardDataBase.Hufflepuff);
+                        break;
                 }
                 break;
             case "Aumento":
@@ -1055,9 +1062,9 @@ public class Evaluador : IVsitor<object?>
                 break;
         }
         Debug.Log(CardDataBase.Decks.Count);
-        if(Faction == Global.Factions.Neutral && newCard is UnitCard unitCard) CardDataBase.Neutral.Add(unitCard);
+        if (Faction == Global.Factions.Neutral && newCard is UnitCard unitCard) CardDataBase.Neutral.Add(unitCard);
         else if (Faction == Global.Factions.Neutral) CardDataBase.Specials.Add((SpecialCard)newCard);
-        
+
         foreach (var deck in CardDataBase.Decks.Values) deck.AddCard(newCard);
         return null;
     }
