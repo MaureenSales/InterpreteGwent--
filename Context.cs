@@ -97,11 +97,6 @@ public class Context
 
         if (card is GameObject cardUI)
         {
-            // if (cardUI.GetComponent<ThisCard>().thisCard is Unit unit)
-            // {
-            //     cardUI.GetComponent<ThisCard>().power = unit.Power.ToString();
-            //     cardUI.GetComponent<ThisCard>().powerText.text = unit.Power.ToString();
-            // }
             if (cards.Contains(card)) return;
             GameObject newCardUI;
             switch (location.name)
@@ -113,9 +108,6 @@ public class Context
                     newCardUI.transform.SetParent(location);
                     location.GetComponent<Hand>().CardsObject.Insert(0, cardUI);
                     location.GetComponent<Hand>().Cards.Insert(0, newCardUI.GetComponent<ThisCard>().thisCard);
-                    //LeanTween.move(cardUI, location.position, 1f).setOnComplete(() => cardUI.transform.SetParent(location));
-                    //newCardUI.GetComponent<Drag>().enabled = true;
-                    //if (newCardUI.GetComponent<ClickOnCard>() != null) newCardUI.GetComponent<ClickOnCard>().enabled = true;
                     Debug.Log(newCardUI.transform.parent.name);
                     await Task.Delay(1000);
                     break;
@@ -125,7 +117,6 @@ public class Context
                     location.GetComponent<Graveyard>().CardsObject.Insert(0, cardUI);
                     location.GetComponent<Graveyard>().Cards.Insert(0, newCardUI.GetComponent<ThisCard>().thisCard);
                     newCardUI.GetComponent<Drag>().enabled = false;
-                    //LeanTween.move(cardUI, location.position, 1f).setOnComplete(() => cardUI.transform.SetParent(location));
                     await Task.Delay(1000); break;
                 case "EnemyField":
                 case "PlayerField":
@@ -138,9 +129,8 @@ public class Context
                             newCardUI.GetComponent<ThisCard>().PrintCard(cardUI.GetComponent<ThisCard>().thisCard);
                             newCardUI.transform.SetParent(location.GetChild(1).GetChild(0));
                             newCardUI.transform.localScale = new Vector3(0.9f, 0.9f, 0);
-                            //LeanTween.move(cardUI, location.GetChild(1).GetChild(0).position, 1f).setOnComplete(() => cardUI.transform.SetParent(location.GetChild(1).GetChild(0)));
                             location.GetChild(1).GetComponentInChildren<Row>().InsertInRow(0, newCardUI);
-                            location.GetChild(1).GetComponentInChildren<SumPower>().UpdatePower();
+                            //location.GetChild(1).GetComponentInChildren<SumPower>().UpdatePower();
                             newCardUI.GetComponent<Drag>().enabled = false;
                             controller.Effects(newCardUI);
                             if (!(unitCard is HeroUnit))
@@ -155,9 +145,8 @@ public class Context
                             newCardUI.GetComponent<ThisCard>().PrintCard(cardUI.GetComponent<ThisCard>().thisCard);
                             newCardUI.transform.SetParent(location.GetChild(2).GetChild(0));
                             newCardUI.transform.localScale = new Vector3(0.9f, 0.9f, 0);
-                            //LeanTween.move(cardUI, location.GetChild(2).GetChild(0).position, 1f).setOnComplete(() => cardUI.transform.SetParent(location.GetChild(2).GetChild(0)));
                             location.GetChild(2).GetComponentInChildren<Row>().InsertInRow(0, newCardUI);
-                            location.GetChild(2).GetComponentInChildren<SumPower>().UpdatePower();
+                            //location.GetChild(2).GetComponentInChildren<SumPower>().UpdatePower();
                             cardUI.GetComponent<Drag>().enabled = false;
                             controller.Effects(newCardUI);
                             if (!(unitCard is HeroUnit))
@@ -172,9 +161,8 @@ public class Context
                             newCardUI.GetComponent<ThisCard>().PrintCard(cardUI.GetComponent<ThisCard>().thisCard);
                             newCardUI.transform.SetParent(location.GetChild(3).GetChild(0));
                             newCardUI.transform.localScale = new Vector3(0.9f, 0.9f, 0);
-                            //LeanTween.move(cardUI, location.GetChild(3).GetChild(0).position, 1f).setOnComplete(() => cardUI.transform.SetParent(location.GetChild(3).GetChild(0)));
                             location.GetChild(3).GetComponentInChildren<Row>().InsertInRow(0, newCardUI);
-                            location.GetChild(3).GetComponentInChildren<SumPower>().UpdatePower();
+                            //location.GetChild(3).GetComponentInChildren<SumPower>().UpdatePower();
                             newCardUI.GetComponent<Drag>().enabled = false;
                             controller.Effects(newCardUI);
                             if (!(unitCard is HeroUnit))
@@ -198,9 +186,8 @@ public class Context
                             newCardUI.GetComponent<ThisCard>().PrintCard(cardUI.GetComponent<ThisCard>().thisCard);
                             newCardUI.transform.SetParent(newLocation.GetChild(1).GetChild(0));
                             newCardUI.transform.localScale = new Vector3(0.9f, 0.9f, 0);
-                            //LeanTween.move(cardUI, newLocation.GetChild(1).GetChild(0).position, 1f).setOnComplete(() => cardUI.transform.SetParent(newLocation.GetChild(1).GetChild(0)));
                             newLocation.GetChild(1).GetComponentInChildren<Row>().InsertInRow(0, newCardUI);
-                            newLocation.GetChild(1).GetComponentInChildren<SumPower>().UpdatePower();
+                            //newLocation.GetChild(1).GetComponentInChildren<SumPower>().UpdatePower();
                             newCardUI.GetComponent<Drag>().enabled = false;
                             controller.Effects(newCardUI);
                             if (!(unit1 is HeroUnit))
@@ -215,9 +202,8 @@ public class Context
                             newCardUI.GetComponent<ThisCard>().PrintCard(cardUI.GetComponent<ThisCard>().thisCard);
                             newCardUI.transform.SetParent(newLocation.GetChild(2).GetChild(0));
                             newCardUI.transform.localScale = new Vector3(0.9f, 0.9f, 0);
-                            //LeanTween.move(cardUI, newLocation.GetChild(2).GetChild(0).position, 1f).setOnComplete(() => cardUI.transform.SetParent(newLocation.GetChild(2).GetChild(0)));
                             newLocation.GetChild(2).GetComponentInChildren<Row>().InsertInRow(0, newCardUI);
-                            newLocation.GetChild(2).GetComponentInChildren<SumPower>().UpdatePower();
+                            //newLocation.GetChild(2).GetComponentInChildren<SumPower>().UpdatePower();
                             newCardUI.GetComponent<Drag>().enabled = false;
                             controller.Effects(newCardUI);
                             if (!(unit1 is HeroUnit))
@@ -232,9 +218,8 @@ public class Context
                             newCardUI.GetComponent<ThisCard>().PrintCard(cardUI.GetComponent<ThisCard>().thisCard);
                             newCardUI.transform.SetParent(newLocation.GetChild(3).GetChild(0));
                             newCardUI.transform.localScale = new Vector3(0.9f, 0.9f, 0);
-                            //LeanTween.move(cardUI, newLocation.GetChild(3).GetChild(0).position, 1f).setOnComplete(() => cardUI.transform.SetParent(newLocation.GetChild(3).GetChild(0)));
                             newLocation.GetChild(3).GetComponentInChildren<Row>().InsertInRow(0, newCardUI);
-                            newLocation.GetChild(3).GetComponentInChildren<SumPower>().UpdatePower();
+                            //newLocation.GetChild(3).GetComponentInChildren<SumPower>().UpdatePower();
                             newCardUI.GetComponent<Drag>().enabled = false;
                             controller.Effects(newCardUI);
                             if (!(unit1 is HeroUnit))
@@ -282,11 +267,6 @@ public class Context
         if (card is GameObject cardUI)
         {
             Debug.Log("luego aqui");
-            // if (cardUI.GetComponent<ThisCard>().thisCard is Unit unit)
-            // {
-            //     cardUI.GetComponent<ThisCard>().power = unit.Power.ToString();
-            //     cardUI.GetComponent<ThisCard>().powerText.text = unit.Power.ToString();
-            // }
             if (cards.Contains(card)) return;
             GameObject newCardUI;
             switch (location.name)
@@ -296,9 +276,6 @@ public class Context
                     newCardUI.transform.SetParent(location);
                     location.GetComponent<Hand>().CardsObject.Add(newCardUI);
                     location.GetComponent<Hand>().Cards.Add(newCardUI.GetComponent<ThisCard>().thisCard);
-                    //LeanTween.move(cardUI, location.position, 1f).setOnComplete(() => cardUI.transform.SetParent(location));
-                    //newCardUI.GetComponent<Drag>().enabled = true;
-                    //if (cardUI.GetComponent<ClickOnCard>() != null) cardUI.GetComponent<ClickOnCard>().enabled = true;
                     await Task.Delay(1000); break;
                 case "Graveyard":
                     newCardUI = GameObject.Instantiate(cardUI, location.position, Quaternion.identity);
@@ -306,7 +283,6 @@ public class Context
                     location.GetComponent<Graveyard>().CardsObject.Add(newCardUI);
                     location.GetComponent<Graveyard>().Cards.Add(newCardUI.GetComponent<ThisCard>().thisCard);
                     newCardUI.GetComponent<Drag>().enabled = false;
-                    //LeanTween.move(cardUI, location.position, 1f).setOnComplete(() => cardUI.transform.SetParent(location));
                     await Task.Delay(1000); break;
                 case "EnemyField":
                 case "PlayerField":
@@ -320,9 +296,8 @@ public class Context
                             newCardUI.GetComponent<ThisCard>().PrintCard(cardUI.GetComponent<ThisCard>().thisCard);
                             newCardUI.transform.SetParent(location.GetChild(1).GetChild(0));
                             newCardUI.transform.localScale = new Vector3(0.9f, 0.9f, 0);
-                            //LeanTween.move(cardUI, location.GetChild(1).GetChild(0).position, 1f).setOnComplete(() => cardUI.transform.SetParent(location.GetChild(1).GetChild(0)));
                             location.GetChild(1).GetComponentInChildren<Row>().AddToRow(newCardUI);
-                            location.GetChild(1).GetComponentInChildren<SumPower>().UpdatePower();
+                            //location.GetChild(1).GetComponentInChildren<SumPower>().UpdatePower();
                             newCardUI.GetComponent<Drag>().enabled = false;
                             controller.Effects(newCardUI);
                             if (!(unitCard is HeroUnit))
@@ -338,9 +313,8 @@ public class Context
                             newCardUI.GetComponent<ThisCard>().PrintCard(cardUI.GetComponent<ThisCard>().thisCard);
                             newCardUI.transform.SetParent(location.GetChild(2).GetChild(0));
                             newCardUI.transform.localScale = new Vector3(0.9f, 0.9f, 0);
-                            //LeanTween.move(cardUI, location.GetChild(2).GetChild(0).position, 1f).setOnComplete(() => cardUI.transform.SetParent(location.GetChild(2).GetChild(0)));
                             location.GetChild(2).GetComponentInChildren<Row>().AddToRow(newCardUI);
-                            location.GetChild(2).GetComponentInChildren<SumPower>().UpdatePower();
+                            //location.GetChild(2).GetComponentInChildren<SumPower>().UpdatePower();
                             newCardUI.GetComponent<Drag>().enabled = false;
                             controller.Effects(newCardUI);
                             if (!(unitCard is HeroUnit))
@@ -355,9 +329,8 @@ public class Context
                             newCardUI.GetComponent<ThisCard>().PrintCard(cardUI.GetComponent<ThisCard>().thisCard);
                             newCardUI.transform.SetParent(location.GetChild(3).GetChild(0));
                             newCardUI.transform.localScale = new Vector3(0.9f, 0.9f, 0);
-                            //LeanTween.move(cardUI, location.GetChild(3).GetChild(0).position, 1f).setOnComplete(() => cardUI.transform.SetParent(location.GetChild(3).GetChild(0)));
                             location.GetChild(3).GetComponentInChildren<Row>().AddToRow(newCardUI);
-                            location.GetChild(3).GetComponentInChildren<SumPower>().UpdatePower();
+                            //location.GetChild(3).GetComponentInChildren<SumPower>().UpdatePower();
                             newCardUI.GetComponent<Drag>().enabled = false;
                             controller.Effects(newCardUI);
                             if (!(unitCard is HeroUnit))
@@ -381,9 +354,8 @@ public class Context
                             newCardUI.GetComponent<ThisCard>().PrintCard(cardUI.GetComponent<ThisCard>().thisCard);
                             newCardUI.transform.SetParent(newLocation.GetChild(1).GetChild(0));
                             newCardUI.transform.localScale = new Vector3(0.9f, 0.9f, 0);
-                            //LeanTween.move(cardUI, newLocation.GetChild(1).GetChild(0).position, 1f).setOnComplete(() => cardUI.transform.SetParent(newLocation.GetChild(1).GetChild(0)));
                             newLocation.GetChild(1).GetComponentInChildren<Row>().AddToRow(newCardUI);
-                            newLocation.GetChild(1).GetComponentInChildren<SumPower>().UpdatePower();
+                            //newLocation.GetChild(1).GetComponentInChildren<SumPower>().UpdatePower();
                             newCardUI.GetComponent<Drag>().enabled = false;
                             controller.Effects(newCardUI);
                             if (!(unit1 is HeroUnit))
@@ -398,9 +370,8 @@ public class Context
                             newCardUI.GetComponent<ThisCard>().PrintCard(cardUI.GetComponent<ThisCard>().thisCard);
                             newCardUI.transform.SetParent(newLocation.GetChild(2).GetChild(0));
                             newCardUI.transform.localScale = new Vector3(0.9f, 0.9f, 0);
-                            //LeanTween.move(cardUI, newLocation.GetChild(2).GetChild(0).position, 1f).setOnComplete(() => cardUI.transform.SetParent(newLocation.GetChild(2).GetChild(0)));
                             newLocation.GetChild(2).GetComponentInChildren<Row>().AddToRow(newCardUI);
-                            newLocation.GetChild(2).GetComponentInChildren<SumPower>().UpdatePower();
+                            //newLocation.GetChild(2).GetComponentInChildren<SumPower>().UpdatePower();
                             newCardUI.GetComponent<Drag>().enabled = false;
                             controller.Effects(newCardUI);
                             if (!(unit1 is HeroUnit))
@@ -415,10 +386,9 @@ public class Context
                             newCardUI.GetComponent<ThisCard>().PrintCard(cardUI.GetComponent<ThisCard>().thisCard);
                             newCardUI.transform.SetParent(newLocation.GetChild(3).GetChild(0));
                             newCardUI.transform.localScale = new Vector3(0.9f, 0.9f, 0);
-                            //LeanTween.move(cardUI, newLocation.GetChild(3).GetChild(0).position, 1f).setOnComplete(() => cardUI.transform.SetParent(newLocation.GetChild(3).GetChild(0)));
                             newLocation.GetChild(3).GetComponentInChildren<Row>().AddToRow(newCardUI);
                             newLocation.GetChild(3).GetComponentInChildren<SumPower>().UpdatePower();
-                            newCardUI.GetComponent<Drag>().enabled = false;
+                            //newCardUI.GetComponent<Drag>().enabled = false;
                             controller.Effects(newCardUI);
                             if (!(unit1 is HeroUnit))
                             {
@@ -464,7 +434,6 @@ public class Context
                         location.GetComponent<Graveyard>().Cards.Remove(cardUI.GetComponent<ThisCard>().thisCard);
                         await Task.Delay(1000); break;
                     case "Hand":
-                        //if (cardUI.transform.parent == location) MoveGraveyard(cardUI);
                         location.GetComponent<Hand>().CardsObject.Remove(cardUI);
                         location.GetComponent<Hand>().Cards.Remove(cardUI.GetComponent<ThisCard>().thisCard);
                         await Task.Delay(1000); break;
@@ -475,21 +444,18 @@ public class Context
                         else location = controller.notCurrentTurn.transform.Find(controller.currentTurn.name + "Field").transform;
                         if (unit1.AttackTypes.Contains(Global.AttackModes.Melee))
                         {
-                            //if (cardUI.transform.parent == location.GetChild(1).GetChild(0).transform) MoveGraveyard(cardUI);
                             location.GetChild(1).GetComponentInChildren<Row>().RemoveFromRow(cardUI);
-                            location.GetChild(1).GetComponentInChildren<SumPower>().UpdatePower();
+                            //location.GetChild(1).GetComponentInChildren<SumPower>().UpdatePower();
                         }
                         else if (unit1.AttackTypes.Contains(Global.AttackModes.Ranged))
                         {
-                            //if (cardUI.transform.parent == location.GetChild(2).GetChild(0).transform) MoveGraveyard(cardUI);
                             location.GetChild(2).GetComponentInChildren<Row>().RemoveFromRow(cardUI);
-                            location.GetChild(2).GetComponentInChildren<SumPower>().UpdatePower();
+                            //location.GetChild(2).GetComponentInChildren<SumPower>().UpdatePower();
                         }
                         else
                         {
-                            //if (cardUI.transform.parent == location.GetChild(3).GetChild(0).transform) MoveGraveyard(cardUI);
                             location.GetChild(3).GetComponentInChildren<Row>().RemoveFromRow(cardUI);
-                            location.GetChild(3).GetComponentInChildren<SumPower>().UpdatePower();
+                            //location.GetChild(3).GetComponentInChildren<SumPower>().UpdatePower();
                         }
                         await Task.Delay(1000); break;
                     case "Canvas":
@@ -503,21 +469,18 @@ public class Context
                             {
                                 Debug.Log(cardUI.transform.parent.name);
                                 Debug.Log(newLocation1.GetChild(1).GetChild(0).transform.name);
-                                //if (cardUI.transform.parent == newLocation1.GetChild(1).GetChild(0).transform) MoveGraveyard(cardUI);
                                 newLocation1.GetChild(1).GetComponentInChildren<Row>().RemoveFromRow(cardUI);
-                                newLocation1.GetChild(1).GetComponentInChildren<SumPower>().UpdatePower();
+                                //newLocation1.GetChild(1).GetComponentInChildren<SumPower>().UpdatePower();
                             }
                             else if (unit2.AttackTypes.Contains(Global.AttackModes.Ranged))
                             {
-                                //if (cardUI.transform.parent == newLocation1.GetChild(2).GetChild(0).transform) MoveGraveyard(cardUI);
                                 newLocation1.GetChild(2).GetComponentInChildren<Row>().RemoveFromRow(cardUI);
-                                newLocation1.GetChild(2).GetComponentInChildren<SumPower>().UpdatePower();
+                                //newLocation1.GetChild(2).GetComponentInChildren<SumPower>().UpdatePower();
                             }
                             else
                             {
-                                //if (cardUI.transform.parent == newLocation1.GetChild(3).GetChild(0).transform) MoveGraveyard(cardUI);
                                 newLocation1.GetChild(3).GetComponentInChildren<Row>().RemoveFromRow(cardUI);
-                                newLocation1.GetChild(3).GetComponentInChildren<SumPower>().UpdatePower();
+                                //newLocation1.GetChild(3).GetComponentInChildren<SumPower>().UpdatePower();
                             }
                         }
                         await Task.Delay(1000); break;

@@ -9,11 +9,32 @@ effect
     Action: (targets, context) => {
     for target in targets
     {
-       target.Power -= Amount;
+      target.Power -= Amount;
     };
    }
 }
 
+      card {
+      Type: "Plata",
+      Name: "Melissa",
+      Faction: "Gryffindor",
+      Power: 10,
+      Range: [ "Melee"],
+      OnActivation: [
+ {
+   Effect: {
+           Name: "Damage",
+           Amount: 1,
+           },
+   Selector: {
+             Source: "field",
+             Single: false,
+             Predicate:
+             (unit) => unit.Faction == "Gryffindor"
+             },
+ }
+            ]
+      }
 
 effect
 {
@@ -176,3 +197,4 @@ card {
  }
             ]
       }
+

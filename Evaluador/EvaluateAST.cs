@@ -109,7 +109,7 @@ public class Evaluador : IVsitor<object?>
                     }
                     if (!find) return ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "Undeclared varible '" + ((VariableReference)expr.Right).Name + "'. ", 0, 0);
                 }
-                if (expr.Right is Property property)
+                else if (expr.Right is Property property)
                 {
                     object? obj = evaluate(property.Object);
                     string access = "";
@@ -128,7 +128,7 @@ public class Evaluador : IVsitor<object?>
                         SetterPropertyIsPublic(cardUI.GetComponent<ThisCard>().thisCard, access);
                         if (expr.Op.Type == TokenType.Increment) cardUI.GetComponent<ThisCard>().powerText.text = (int.Parse(cardUI.GetComponent<ThisCard>().powerText.text) + 1).ToString();
                         else cardUI.GetComponent<ThisCard>().powerText.text = (int.Parse(cardUI.GetComponent<ThisCard>().powerText.text) - 1).ToString(); ;
-                        cardUI.transform.parent.parent.GetComponentInChildren<SumPower>().UpdatePower();
+                        //cardUI.transform.parent.parent.GetComponentInChildren<SumPower>().UpdatePower();
                         result = int.Parse(cardUI.GetComponent<ThisCard>().powerText.text);
                     }
                     else if (obj is Context) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"el descriptor de acceso de la propiedad {access} es inaccesible", 0, 0);
@@ -151,8 +151,8 @@ public class Evaluador : IVsitor<object?>
                     }
                 }
                 else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"el operador {expr.Op.Lexeme} solo se puede aplicar a una variable, una propiedad o un indizador", 0, 0);
-
-                return null;
+                Debug.Log(result + "result");
+                return result;
         }
 
         return result;
@@ -344,7 +344,7 @@ public class Evaluador : IVsitor<object?>
             {
                 SetterPropertyIsPublic(cardUI.GetComponent<ThisCard>().thisCard, access);
                 cardUI.GetComponent<ThisCard>().powerText.text = value.ToString();
-                cardUI.transform.parent.parent.GetComponentInChildren<SumPower>().UpdatePower();
+                //cardUI.transform.parent.parent.GetComponentInChildren<SumPower>().UpdatePower();
             }
             else if (obj is Context) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"el descriptor de acceso de la propiedad {access} es inaccesible", 0, 0);
             else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"{obj!.GetType()} no contiene un definicion para {access}", 0, 0);
@@ -560,7 +560,7 @@ public class Evaluador : IVsitor<object?>
                 SetterPropertyIsPublic(cardUI.GetComponent<ThisCard>().thisCard, access);
                 if (expr.Op.Type == TokenType.Increment) cardUI.GetComponent<ThisCard>().powerText.text = (int.Parse(cardUI.GetComponent<ThisCard>().powerText.text) + 1).ToString();
                 else cardUI.GetComponent<ThisCard>().powerText.text = (int.Parse(cardUI.GetComponent<ThisCard>().powerText.text) - 1).ToString();
-                cardUI.transform.parent.parent.GetComponentInChildren<SumPower>().UpdatePower();
+                //cardUI.transform.parent.parent.GetComponentInChildren<SumPower>().UpdatePower();
             }
             else if (obj is Context) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"el descriptor de acceso de la propiedad {access} es inaccesible", 0, 0);
             else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"{obj!.GetType()} no contiene un definicion para {access}", 0, 0);
@@ -671,7 +671,7 @@ public class Evaluador : IVsitor<object?>
                     case TokenType.ModuloAssignment:
                         cardUI.GetComponent<ThisCard>().powerText.text = (int.Parse(cardUI.GetComponent<ThisCard>().powerText.text) % (int)(double)num).ToString(); break;
                 }
-                cardUI.transform.parent.parent.GetComponentInChildren<SumPower>().UpdatePower();
+                //cardUI.transform.parent.parent.GetComponentInChildren<SumPower>().UpdatePower();
                 result = int.Parse(cardUI.GetComponent<ThisCard>().powerText.text);
             }
             else if (obj is Context) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"el descriptor de acceso de la propiedad {access} es inaccesible", 0, 0);
@@ -1049,13 +1049,25 @@ public class Evaluador : IVsitor<object?>
                         foreach (var item in CardDataBase.Specials) CardDataBase.Hufflepuff.AddCard(item);
                         CardDataBase.Decks.Add(Global.Factions.Hufflepuff, CardDataBase.Hufflepuff);
                         break;
+                    default: throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "faccion no definida", 0, 0);
                 }
                 break;
             case "Aumento":
                 newCard = new Boost(name, new List<Skill>() { new Skill("Boost", null, null) }, "", Resources.Load<Sprite>("image"));
                 break;
             case "Clima":
-                newCard = new Weather(name, new List<Skill>() { new Skill("WeatherMelee", null, null) }, "", Resources.Load<Sprite>("image"), Resources.Load<Sprite>("Frost"));
+                switch (attackModes[0])
+                {
+                    case Global.AttackModes.Melee:
+                        newCard = new Weather(name, new List<Skill>() { new Skill("WeatherMelee", null, null) }, "", Resources.Load<Sprite>("image"), Resources.Load<Sprite>("Frost"));
+                        break;
+                    case Global.AttackModes.Ranged:
+                        newCard = new Weather(name, new List<Skill>() { new Skill("WeatherRanged", null, null) }, "", Resources.Load<Sprite>("image"), Resources.Load<Sprite>("Fog"));
+                        break;
+                    case Global.AttackModes.Siege:
+                        newCard = new Weather(name, new List<Skill>() { new Skill("WeatherSiege", null, null) }, "", Resources.Load<Sprite>("image"), Resources.Load<Sprite>("Rain"));
+                        break;
+                }
                 break;
             case "Despeje":
                 newCard = new Clear(name, new List<Skill>() { new Skill("ClearWeather", null, null) }, "", Resources.Load<Sprite>("image"));

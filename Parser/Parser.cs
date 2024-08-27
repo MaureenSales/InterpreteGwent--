@@ -71,6 +71,7 @@ public class Parser : MonoBehaviour
                         case 1: parameters = Params(); fields[1] = 1; break;
                         case 2: actionFun = Action(); fields[2] = 1; break;
                     }
+                    break;
                 }
                 else if (fields[i] == 1 && Match(fieldsType[i]))
                 {
@@ -246,6 +247,7 @@ public class Parser : MonoBehaviour
                             effects = ArrayDSL();
                             fields[5] = 1; break;
                     }
+                    break;
                 }
                 else if (fields[i] == 1 && Match(fieldsType[i]))
                 {
@@ -321,6 +323,7 @@ public class Parser : MonoBehaviour
                                 //Consume(ErrorExceptions.ErrorType.SINTACTIC, TokenType.Comma, "',' is expected after declaration of the a field");
                                 fields[2] = 1; break;
                         }
+                        break;
                     }
                     else if (fields[i] == 1 && Match(fieldsType[i]))
                     {
@@ -409,6 +412,7 @@ public class Parser : MonoBehaviour
                             Consume(ErrorExceptions.ErrorType.SINTACTIC, TokenType.Colon, "':' is expected after declaration of a field");
                             predicate = PredicateLambda(); fields[2] = 1; break;
                     }
+                    break;
                 }
                 else if (fields[i] == 1 && Match(fieldsType[i]))
                 {
