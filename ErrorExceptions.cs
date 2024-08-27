@@ -9,10 +9,15 @@ public class ErrorExceptions : MonoBehaviour
         throw new System.Exception($"{type.ToString()} ERROR: {error} in line {line} at column {column}.");
     }
 
+    public static System.Exception Error(ErrorType type, string error)
+    {
+        throw new System.Exception($"{type.ToString()} ERROR: {error}.");
+    }
+
     public enum ErrorType
     {
         LEXICAL,
-        SINTACTIC,
+        SYNTACTIC,
         SEMANTIC
     }
     // Start is called before the first frame update
