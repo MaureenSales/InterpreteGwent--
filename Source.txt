@@ -14,6 +14,21 @@ effect
    }
 }
 
+effect
+{
+    Name: "Damage",
+    Action: (targets, context) => {
+    for target in targets
+    {
+      target.Power -= Amount;
+    };
+   },
+    Params:
+    {
+        Amount: Number
+    }
+}
+
       card {
       Type: "Plata",
       Name: "Melissa",

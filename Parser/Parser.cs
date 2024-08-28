@@ -113,7 +113,7 @@ public class Parser : MonoBehaviour
             parameters.Add(new AssignmentWithType(variable, type, null));
         } while (Match(TokenType.Comma));
         Consume(ErrorExceptions.ErrorType.SYNTACTIC, TokenType.ClBraces, "'}' is expected after declaration of values of a Params field");
-        if((Match(TokenType.Comma) && PeekNext().Type != TokenType.ClBraces) || !Match(TokenType.ClBraces, TokenType.Comma)) Consume(ErrorExceptions.ErrorType.SYNTACTIC, TokenType.Comma, "',' is expected after declaration of the Params field");
+        if ((Match(TokenType.Comma) && PeekNext().Type != TokenType.ClBraces) || !Match(TokenType.ClBraces, TokenType.Comma)) Consume(ErrorExceptions.ErrorType.SYNTACTIC, TokenType.Comma, "',' is expected after declaration of the Params field");
         return parameters;
     }
 
@@ -141,7 +141,7 @@ public class Parser : MonoBehaviour
         List<ASTnode> body = new List<ASTnode>();
         if (Match(TokenType.OpBraces)) body = ExprBlock();
         else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SYNTACTIC, "'{' is expected before the body of the function", Current.Line, Current.Col);
-        if((Match(TokenType.Comma) && PeekNext().Type != TokenType.ClBraces) || !Match(TokenType.ClBraces, TokenType.Comma)) Consume(ErrorExceptions.ErrorType.SYNTACTIC, TokenType.Comma, "',' is expected after value of a field");
+        if ((Match(TokenType.Comma) && PeekNext().Type != TokenType.ClBraces) || !Match(TokenType.ClBraces, TokenType.Comma)) Consume(ErrorExceptions.ErrorType.SYNTACTIC, TokenType.Comma, "',' is expected after value of a field");
         return new ActionFun(parameters, body);
     }
 
@@ -240,7 +240,7 @@ public class Parser : MonoBehaviour
                             position++;
                             Consume(ErrorExceptions.ErrorType.SYNTACTIC, TokenType.Colon, "':' is expected after declaration of a field");
                             range = ArrayDSL();
-                            Consume(ErrorExceptions.ErrorType.SYNTACTIC, TokenType.Comma, "',' is expected after declaration of the a field");
+                            if ((Match(TokenType.Comma) && PeekNext().Type != TokenType.ClBraces) || !Match(TokenType.ClBraces, TokenType.Comma)) Consume(ErrorExceptions.ErrorType.SYNTACTIC, TokenType.Comma, "',' is expected after declaration of the a field");
                             fields[4] = 1; break;
                         case 5:
                             position++;
@@ -272,7 +272,7 @@ public class Parser : MonoBehaviour
         Consume(ErrorExceptions.ErrorType.SYNTACTIC, TokenType.Colon, "':' is expected after declaration of a field");
         ASTnode value;
         value = Assignment();
-        if((Match(TokenType.Comma) && PeekNext().Type != TokenType.ClBraces) || !Match(TokenType.ClBraces, TokenType.Comma)) Consume(ErrorExceptions.ErrorType.SYNTACTIC, TokenType.Comma, "',' is expected after value of a field");
+        if ((Match(TokenType.Comma) && PeekNext().Type != TokenType.ClBraces) || !Match(TokenType.ClBraces, TokenType.Comma)) Consume(ErrorExceptions.ErrorType.SYNTACTIC, TokenType.Comma, "',' is expected after value of a field");
         return value;
     }
 
@@ -296,55 +296,61 @@ public class Parser : MonoBehaviour
         if (Match(TokenType.OpBraces))
         {
             position++;
-            ASTnode name = null!;
-            List<ASTnode> parameters = new List<ASTnode>();
-            ASTnode? selector = null!;
-            ASTnode? postAction = null;
-            int[] fields = new int[4];
-            TokenType[] fieldsType = { TokenType.Effect, TokenType.Selector, TokenType.PostAction, TokenType.Type };
-            int count = 0;
-            while (count < 3)
-            {
-                for (int i = 0; i < fields.Length; i++)
-                {
-                    if (fields[i] == 0 && Match(fieldsType[i]))
-                    {
-                        switch (i)
-                        {
-                            case 0:
-                            case 3:
-                                EffectInstance(ref name!, ref parameters); fields[0] = 1; break;
-                            case 1: selector = SelectorField(); fields[1] = 1; break;
-                            case 2:
-                                position++;
-                                Consume(ErrorExceptions.ErrorType.SYNTACTIC, TokenType.Colon, "':' is expected after declaration of a field");
-                                Consume(ErrorExceptions.ErrorType.SYNTACTIC, TokenType.OpBraces, "'{' is expected before the values of a field");
-                                postAction = ActivationMember(selector);
-                                Consume(ErrorExceptions.ErrorType.SYNTACTIC, TokenType.ClBraces, "'}' is expected after body of a field");
-                                //Consume(ErrorExceptions.ErrorType.SYNTACTIC, TokenType.Comma, "',' is expected after declaration of the a field");
-                                fields[2] = 1; break;
-                        }
-                        break;
-                    }
-                    else if (fields[i] == 1 && Match(fieldsType[i]))
-                    {
-                        throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SYNTACTIC, $"Field {Current.Lexeme} already defined", Current.Line, Current.Col);
-                    }
-                }
-                count++;
-            }
-            for (int i = 0; i < fields.Length - 2; i++)
-            {
-                if (fields[i] == 0)
-                {
-                    if (i == 1) selector = parent;
-                    else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SYNTACTIC, $"Must define the {fieldsType[i]} field in declaration of an Effect", Current.Line, Current.Col);
-                }
-            }
+            ASTnode effect = DeclarationEffect(parent);
             Consume(ErrorExceptions.ErrorType.SYNTACTIC, TokenType.ClBraces, "'}' is expected after declaration of an effect in body of a card");
-            return new CallEffect(name!, parameters, selector, postAction);
+            return effect;
         }
         return Assignment();
+    }
+
+    private ASTnode DeclarationEffect(ASTnode? parent)
+    {
+
+        ASTnode name = null!;
+        List<ASTnode> parameters = new List<ASTnode>();
+        ASTnode? selector = null!;
+        ASTnode? postAction = null;
+        int[] fields = new int[4];
+        TokenType[] fieldsType = { TokenType.Effect, TokenType.Selector, TokenType.PostAction, TokenType.Type };
+        int count = 0;
+        while (count < 3)
+        {
+            for (int i = 0; i < fields.Length; i++)
+            {
+                if (fields[i] == 0 && Match(fieldsType[i]))
+                {
+                    switch (i)
+                    {
+                        case 0:
+                        case 3:
+                            EffectInstance(ref name!, ref parameters); fields[0] = 1; break;
+                        case 1: selector = SelectorField(); fields[1] = 1; break;
+                        case 2:
+                            position++;
+                            Consume(ErrorExceptions.ErrorType.SYNTACTIC, TokenType.Colon, "':' is expected after declaration of a field");
+                            Consume(ErrorExceptions.ErrorType.SYNTACTIC, TokenType.OpBraces, "'{' is expected before the values of a field");
+                            postAction = DeclarationEffect(selector);
+                            Consume(ErrorExceptions.ErrorType.SYNTACTIC, TokenType.ClBraces, "'}' is expected after body of a field");
+                            fields[2] = 1; break;
+                    }
+                    break;
+                }
+                else if (fields[i] == 1 && Match(fieldsType[i]))
+                {
+                    throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SYNTACTIC, $"Field {Current.Lexeme} already defined", Current.Line, Current.Col);
+                }
+            }
+            count++;
+        }
+        for (int i = 0; i < fields.Length - 2; i++)
+        {
+            if (fields[i] == 0)
+            {
+                if (i == 1) selector = parent;
+                else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SYNTACTIC, $"Must define the {fieldsType[i]} field in declaration of an Effect", Current.Line, Current.Col);
+            }
+        }
+        return new CallEffect(name!, parameters, selector, postAction);
     }
 
     private void EffectInstance(ref ASTnode? name, ref List<ASTnode> parameters)
@@ -383,7 +389,7 @@ public class Parser : MonoBehaviour
 
         value = Assignment();
 
-        if((Match(TokenType.Comma) && PeekNext().Type != TokenType.ClBraces) || !Match(TokenType.ClBraces, TokenType.Comma)) Consume(ErrorExceptions.ErrorType.SYNTACTIC, TokenType.Comma, "',' is expected after value of a field");
+        if ((Match(TokenType.Comma) && PeekNext().Type != TokenType.ClBraces) || !Match(TokenType.ClBraces, TokenType.Comma)) Consume(ErrorExceptions.ErrorType.SYNTACTIC, TokenType.Comma, "',' is expected after value of a field");
         return new Assignment(variable, value);
     }
 
@@ -426,7 +432,7 @@ public class Parser : MonoBehaviour
             if (fields[i] == 0) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SYNTACTIC, $"Must define the {fieldsType[i]} field in declaration of a Selector field", Current.Line, Current.Col);
         }
         Consume(ErrorExceptions.ErrorType.SYNTACTIC, TokenType.ClBraces, "'}' is expected after declaration of a field");
-        Consume(ErrorExceptions.ErrorType.SYNTACTIC, TokenType.Comma, "',' is expected after declaration of a field");
+        if ((Match(TokenType.Comma) && PeekNext().Type != TokenType.ClBraces) || !Match(TokenType.ClBraces, TokenType.Comma)) Consume(ErrorExceptions.ErrorType.SYNTACTIC, TokenType.Comma, "',' is expected after declaration of a field");
         return new Selector(source, single, predicate);
     }
 
@@ -442,7 +448,7 @@ public class Parser : MonoBehaviour
         Consume(ErrorExceptions.ErrorType.SYNTACTIC, TokenType.ClParenthesis, "')' is expected after declaration of parameter of a predicate expression");
         Consume(ErrorExceptions.ErrorType.SYNTACTIC, TokenType.Imply, "'=>' is expected before declaration of the body of a predicate expression");
         ASTnode body = Assignment();
-        if((Match(TokenType.Comma) && PeekNext().Type != TokenType.ClBraces) || !Match(TokenType.ClBraces, TokenType.Comma)) Consume(ErrorExceptions.ErrorType.SYNTACTIC, TokenType.Comma, "',' is expected after value of a field");
+        if ((Match(TokenType.Comma) && PeekNext().Type != TokenType.ClBraces) || !Match(TokenType.ClBraces, TokenType.Comma)) Consume(ErrorExceptions.ErrorType.SYNTACTIC, TokenType.Comma, "',' is expected after value of a field");
         return new PredicateLambda(parameter, body);
     }
 
