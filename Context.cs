@@ -104,6 +104,7 @@ public class Context
                 case "Hand":
                     newCardUI = GameObject.Instantiate(cardUI, location.position, Quaternion.identity);
                     newCardUI.transform.SetParent(location);
+                    newCardUI.transform.localScale = new Vector3(1f, 1f, 0f);
                     location.GetComponent<Hand>().CardsObject.Insert(0, cardUI);
                     location.GetComponent<Hand>().Cards.Insert(0, newCardUI.GetComponent<ThisCard>().thisCard);
                     await Task.Delay(1000);
@@ -111,6 +112,7 @@ public class Context
                 case "Graveyard":
                     newCardUI = GameObject.Instantiate(cardUI, location.position, Quaternion.identity);
                     newCardUI.transform.SetParent(location);
+                    newCardUI.transform.localScale = new Vector3(0.9f, 0.9f, 0f);
                     location.GetComponent<Graveyard>().CardsObject.Insert(0, cardUI);
                     location.GetComponent<Graveyard>().Cards.Insert(0, newCardUI.GetComponent<ThisCard>().thisCard);
                     newCardUI.GetComponent<Drag>().enabled = false;

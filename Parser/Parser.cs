@@ -305,7 +305,6 @@ public class Parser : MonoBehaviour
 
     private ASTnode DeclarationEffect(ASTnode? parent)
     {
-
         ASTnode name = null!;
         List<ASTnode> parameters = new List<ASTnode>();
         ASTnode? selector = null!;
@@ -378,7 +377,7 @@ public class Parser : MonoBehaviour
         }
 
         if (!sugar) Consume(ErrorExceptions.ErrorType.SYNTACTIC, TokenType.ClBraces, "'}' is expected after declaration of the Effect field");
-        else if ((Match(TokenType.Comma) && PeekNext().Type != TokenType.ClBraces) || !Match(TokenType.ClBraces, TokenType.Comma)) Consume(ErrorExceptions.ErrorType.SYNTACTIC, TokenType.Comma, "',' is expected after declaration of the Effect field");
+        if ((Match(TokenType.Comma) && PeekNext().Type != TokenType.ClBraces) || !Match(TokenType.ClBraces, TokenType.Comma)) Consume(ErrorExceptions.ErrorType.SYNTACTIC, TokenType.Comma, "',' is expected after declaration of the Effect field");
     }
 
     private ASTnode Arguments()
