@@ -1113,6 +1113,7 @@ public class Evaluador : IVsitor<object?>
     {
         PropertyInfo IsReadOnly = list.GetType().GetProperty("IsReadOnly");
         if (IsReadOnly != null) if ((bool)IsReadOnly.GetValue(list)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "la lista es de solo lectura");
+        if(list.Count < index + 1) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "indexacion fuera de rango");
         if (list[index].GetType() != value.GetType()) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"no se puede convertir implicitamente del tipo {value.GetType()} a {list[index].GetType()}");
     }
     private void SetterPropertyIsPublic(object obj, string access)
