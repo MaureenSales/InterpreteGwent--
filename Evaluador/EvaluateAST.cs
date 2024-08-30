@@ -338,7 +338,6 @@ public class Evaluador : IVsitor<object?>
             {
                 SetterPropertyIsPublic(cardUI.GetComponent<ThisCard>().thisCard, access);
                 cardUI.GetComponent<ThisCard>().powerText.text = value.ToString();
-                //cardUI.transform.parent.parent.GetComponentInChildren<SumPower>().UpdatePower();
             }
             else if (obj is Context) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"el descriptor de acceso de la propiedad {access} es inaccesible");
             else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"{obj!.GetType()} no contiene un definicion para {access}");
