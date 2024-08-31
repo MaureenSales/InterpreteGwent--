@@ -91,6 +91,7 @@ public class Context
             {
                 GameObject newCard = GameObject.Instantiate(controller.CardPrefab, new Vector3(0, 0, 0), Quaternion.identity);
                 newCard.GetComponent<ThisCard>().PrintCard((Card)card);
+                Debug.Log(card.GetType());
                 card = newCard;
             }
         }
@@ -103,6 +104,7 @@ public class Context
             {
                 case "Hand":
                     newCardUI = GameObject.Instantiate(cardUI, location.position, Quaternion.identity);
+                    newCardUI.GetComponent<ThisCard>().PrintCard((Card)cardUI.GetComponent<ThisCard>().thisCard);
                     newCardUI.transform.SetParent(location);
                     newCardUI.transform.localScale = new Vector3(1f, 1f, 0f);
                     location.GetComponent<Hand>().CardsObject.Insert(0, cardUI);
@@ -111,6 +113,7 @@ public class Context
                     break;
                 case "Graveyard":
                     newCardUI = GameObject.Instantiate(cardUI, location.position, Quaternion.identity);
+                    newCardUI.GetComponent<ThisCard>().PrintCard((Card)cardUI.GetComponent<ThisCard>().thisCard);
                     newCardUI.transform.SetParent(location);
                     newCardUI.transform.localScale = new Vector3(0.9f, 0.9f, 0f);
                     location.GetComponent<Graveyard>().CardsObject.Insert(0, cardUI);
@@ -133,7 +136,6 @@ public class Context
                             controller.Effects(newCardUI);
                             if (!(unitCard is HeroUnit))
                             {
-                                //GameObject.Find("WeatherZone").GetComponent<WeatherController>().WeatherEffect(newCardUI, newCardUI.transform.parent);
                                 controller.Improve(newCardUI, "Melee");
                             }
                         }
@@ -148,7 +150,6 @@ public class Context
                             controller.Effects(newCardUI);
                             if (!(unitCard is HeroUnit))
                             {
-                                //GameObject.Find("WeatherZone").GetComponent<WeatherController>().WeatherEffect(newCardUI, newCardUI.transform.parent);
                                 controller.Improve(newCardUI, "Ranged");
                             }
                         }
@@ -163,7 +164,6 @@ public class Context
                             controller.Effects(newCardUI);
                             if (!(unitCard is HeroUnit))
                             {
-                                //GameObject.Find("WeatherZone").GetComponent<WeatherController>().WeatherEffect(newCardUI, newCardUI.transform.parent);
                                 controller.Improve(newCardUI, "Siege");
                             }
                         }
@@ -187,7 +187,6 @@ public class Context
                             controller.Effects(newCardUI);
                             if (!(unit1 is HeroUnit))
                             {
-                                //GameObject.Find("WeatherZone").GetComponent<WeatherController>().WeatherEffect(newCardUI, newCardUI.transform.parent);
                                 controller.Improve(newCardUI, "Melee");
                             }
                         }
@@ -202,7 +201,6 @@ public class Context
                             controller.Effects(newCardUI);
                             if (!(unit1 is HeroUnit))
                             {
-                                //GameObject.Find("WeatherZone").GetComponent<WeatherController>().WeatherEffect(newCardUI, newCardUI.transform.parent);
                                 controller.Improve(newCardUI, "Ranged");
                             }
                         }
@@ -217,7 +215,6 @@ public class Context
                             controller.Effects(newCardUI);
                             if (!(unit1 is HeroUnit))
                             {
-                                //GameObject.Find("WeatherZone").GetComponent<WeatherController>().WeatherEffect(newCardUI, newCardUI.transform.parent);
                                 controller.Improve(newCardUI, "Siege");
                             }
                         }

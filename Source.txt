@@ -7,7 +7,10 @@ effect
         Amount: Number
     },
     Action: (targets, context) => {
-    targets[15] -= Amount;
+    for target in targets
+    {
+      target.Power -= Amount;
+    };
    }
 }
 effect
@@ -33,6 +36,18 @@ effect
         context.Hand.Shuffle();
    }
 }
+      card {
+      Type: "Plata",
+      Name: "X",
+      Faction: "Neutral",
+      Power: 7,
+      Range: [ "Melee", "Siege"],
+      OnActivation: [
+        {
+        Effect: "Draw"
+        }
+      ]
+      }
 card 
 {
   Type: "Plata",
@@ -61,7 +76,7 @@ card
         {
           Source: "parent",
           Single: false,
-          Predicate: (unit) => unit.Power < 1
+          Predicate: (unit) => unit.Power < 5
         }
       }
     },
@@ -198,18 +213,6 @@ effect
       ]
       }
       
-      card {
-      Type: "Despeje",
-      Name: "nuevoDespeje",
-      Faction: "Neutral",
-      Power: 7,
-      Range: [ "Melee"],
-      OnActivation: [
-        {
-        Effect: "Draw"
-        }
-      ]
-      }
 
       
       
