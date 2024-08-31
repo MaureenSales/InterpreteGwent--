@@ -747,7 +747,7 @@ public class Evaluador : IVsitor<object?>
     {
         string? name = evaluate(effect.Name) as string;
         if (name is null) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "el capo Name de un effecto es de tipo string");
-        if (!Global.EffectsCreated.ContainsKey(name!))
+        if (!Global.EffectsCreated.ContainsKey(name!) && !Global.Effects.ContainsKey(name))
         {
             Global.EffectsCreated.Add(name!, effect);
         }
@@ -802,6 +802,19 @@ public class Evaluador : IVsitor<object?>
             case "board":
                 Debug.Log("source: board");
                 list = context.FilterOfCards(LocationCards.Board, context.TriggerPlayer);
+                sources = list.Item1;
+                Debug.Log(sources.Count);
+                foreach (var card in sources)
+                {
+                    VariableScopes.Peek()[name] = card;
+                    var target = evaluate(predicate);
+                    if (target != null) targets.Add(card);
+                }
+                ListingLocation[targets] = list.Item2;
+                break;
+            case "weatherZone":
+                Debug.Log("source: weather");
+                list = context.FilterOfCards(LocationCards.WeatherZone, context.TriggerPlayer);
                 sources = list.Item1;
                 Debug.Log(sources.Count);
                 foreach (var card in sources)
@@ -904,7 +917,7 @@ public class Evaluador : IVsitor<object?>
                 break;
         }
 
-        if (firstValue)
+        if (firstValue && targets.Count > 0)
         {
             var target = targets[0];
             targets = new List<object> { target };

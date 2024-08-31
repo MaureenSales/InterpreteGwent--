@@ -15,6 +15,7 @@ public class Context
     public (List<GameObject>, Transform) Field { get { return FilterOfCards(LocationCards.Field, TriggerPlayer); } }
     public (List<GameObject>, Transform) Graveyard { get { return FilterOfCards(LocationCards.Graveyard, TriggerPlayer); } }
     public (List<GameObject>, Transform) Board { get { return FilterOfCards(LocationCards.Board, TriggerPlayer); } }
+    public (List<GameObject>, Transform) WeatherZone { get { return FilterOfCards(LocationCards.WeatherZone, TriggerPlayer); } }
     public (List<Card>, Transform) Deck { get { return GetDeck(TriggerPlayer); } }
 
     public Context()
@@ -45,6 +46,11 @@ public class Context
             result = gameController!.transform.GetComponentInChildren<Board>().AllCardsObject;
             Debug.Log(result.Count + " todas las cartas");
             location = DemandedPlayer.gameObject.transform.parent;
+        }
+        else if (type == LocationCards.WeatherZone)
+        {
+            result = gameController!.transform.GetComponentInChildren<Board>().gameObject.transform.GetComponentInChildren<WeatherZone>().GetWeathers();
+            location = gameController!.transform.GetComponentInChildren<Board>().gameObject.transform.GetComponentInChildren<WeatherZone>().transform;
         }
         else
         {
@@ -102,6 +108,46 @@ public class Context
             GameObject newCardUI;
             switch (location.name)
             {
+                case "WeatherZone":
+                    if (!(cardUI.GetComponent<ThisCard>().thisCard is Weather)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"una carta de tipo {cardUI.GetComponent<ThisCard>().thisCard.Type} no puede colocarse en la zona de climas");
+                    else
+                    {
+                        newCardUI = GameObject.Instantiate(cardUI, location.position, Quaternion.identity);
+                        newCardUI.GetComponent<ThisCard>().PrintCard((Card)cardUI.GetComponent<ThisCard>().thisCard);
+                        switch (((Weather)cardUI.GetComponent<ThisCard>().thisCard).Skills[0].Name)
+                        {
+                            case "WeatherMelee":
+                                if(location.GetComponent<WeatherController>().weather[0])
+                                {
+                                    Debug.Log("Clima M activo");
+                                    return;
+                                }
+                                newCardUI.transform.SetParent(location.GetChild(0));
+                                location.GetComponent<WeatherController>().weather[0] = true;
+                                location.GetComponent<WeatherController>().ApplyWeather("Frost"); break;
+                            case "WeatherRanged":
+                                if(location.GetComponent<WeatherController>().weather[1])
+                                {
+                                    Debug.Log("Clima R activo");
+                                    return;
+                                }
+                                newCardUI.transform.SetParent(location.GetChild(1));
+                                location.GetComponent<WeatherController>().weather[1] = true;
+                                location.GetComponent<WeatherController>().ApplyWeather("Fog"); break;
+                            case "WeatherSiege":
+                                if(location.GetComponent<WeatherController>().weather[2])
+                                {
+                                    Debug.Log("Clima S activo");
+                                    return;
+                                }
+                                newCardUI.transform.SetParent(location.GetChild(2));
+                                location.GetComponent<WeatherController>().weather[2] = true;
+                                location.GetComponent<WeatherController>().ApplyWeather("Rain"); break;
+                        }
+                        newCardUI.transform.localScale = new Vector3(0.8f, 0.8f, 0f);
+                    }
+                    await Task.Delay(1000);
+                    break;
                 case "Hand":
                     newCardUI = GameObject.Instantiate(cardUI, location.position, Quaternion.identity);
                     newCardUI.GetComponent<ThisCard>().PrintCard((Card)cardUI.GetComponent<ThisCard>().thisCard);
@@ -234,7 +280,11 @@ public class Context
     }
 
     public void Push(object card, IList cards, Dictionary<IList, Transform> listingLocation) => AggCard(card, cards, listingLocation, 0);
-    public void SendBottom(object card, IList cards, Dictionary<IList, Transform> listingLocation) => AggCard(card, cards, listingLocation, cards.Count - 1);
+    public void SendBottom(object card, IList cards, Dictionary<IList, Transform> listingLocation)
+    {
+       if(cards.Count == 0) AggCard(card, cards, listingLocation, cards.Count);
+       else AggCard(card, cards, listingLocation, cards.Count - 1);
+    }
     async public void Remove(object card, IList cards, Dictionary<IList, Transform> listingLocation)
     {
         Transform location = listingLocation[cards];
@@ -254,6 +304,18 @@ public class Context
                 }
                 switch (location.name)
                 {
+                    case "WeatherZone":
+                        if (!(cardUI.GetComponent<ThisCard>().thisCard is Weather)) return;
+                        switch (((Weather)cardUI.GetComponent<ThisCard>().thisCard).Skills[0].Name)
+                        {
+                            case "WeatherMelee":
+                                controller.ClearWeatherZone(0, 1); break;
+                            case "WeatherRanged":
+                                controller.ClearWeatherZone(1,  2); break;
+                            case "WeatherSiege":
+                                controller.ClearWeatherZone(2, 3); break;
+                        }
+                        await Task.Delay(1000); break;
                     case "Graveyard":
                         location.GetComponent<Graveyard>().CardsObject.Remove(cardUI);
                         location.GetComponent<Graveyard>().Cards.Remove(cardUI.GetComponent<ThisCard>().thisCard);
@@ -368,4 +430,6 @@ public enum LocationCards
     Field,
     Deck,
     Board,
+    WeatherZone,
+    BoostCells,
 }

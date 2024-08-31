@@ -7,10 +7,13 @@ effect
         Amount: Number
     },
     Action: (targets, context) => {
+      i = 2;
     for target in targets
     {
-      target.Power -= Amount;
+      target.Power -= Amount + i;
+      j = 4;
     };
+    t = j + 3;
    }
 }
 effect
@@ -76,7 +79,7 @@ card
         {
           Source: "parent",
           Single: false,
-          Predicate: (unit) => unit.Power < 5
+          Predicate: (unit) => unit.Power < 1
         }
       }
     },
@@ -179,7 +182,7 @@ effect
 
 
 
-      effect
+effect
 {
     Name: "PutUnit",
     Action: (targets, context) => {
@@ -191,6 +194,20 @@ effect
     };
    }
 }
+      effect
+{
+    Name: "PonerClima",
+    Action: (targets, context) => {
+    for target in targets
+    {
+      weather = context.WeatherZone;
+      weather.Add(target);
+      context.Deck.Remove(target);
+    };
+   }
+}
+
+
       card {
       Type: "Plata",
       Name: "SuperMau",
@@ -201,14 +218,14 @@ effect
         {
         Effect: 
         {
-          Name: "PutUnit",
+          Name: "PonerClima"
         },
         Selector: 
         {
           Source: "deck",
-          Single: false,
-          Predicate: (unit) => unit.Power >= 7
-        },
+          Single: true,
+          Predicate: (unit) => unit.Type == "Clima"
+        }
         }
       ]
       }

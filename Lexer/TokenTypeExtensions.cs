@@ -98,6 +98,8 @@ public class TokenTypeExtensions : MonoBehaviour
                 "Field",
                 "Graveyard",
                 "Owner",
+                "WeatherZone",
+                "CellsBoost"
 
            };
 
