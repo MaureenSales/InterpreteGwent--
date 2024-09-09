@@ -12,7 +12,7 @@ public class Context
     public string TriggerPlayer { get; private set; }
     public string OtherPlayer { get; private set; }
     public (List<GameObject>, Transform) Hand { get { return FilterOfCards(LocationCards.Hand, TriggerPlayer); } }
-    public (List<GameObject>, Transform) BoosterCells { get { return FilterOfCards(LocationCards.BoosterCells, TriggerPlayer);}}
+    public (List<GameObject>, Transform) BoosterCells { get { return FilterOfCards(LocationCards.BoosterCells, TriggerPlayer); } }
     public (List<GameObject>, Transform) Field { get { return FilterOfCards(LocationCards.Field, TriggerPlayer); } }
     public (List<GameObject>, Transform) Graveyard { get { return FilterOfCards(LocationCards.Graveyard, TriggerPlayer); } }
     public (List<GameObject>, Transform) Board { get { return FilterOfCards(LocationCards.Board, TriggerPlayer); } }
@@ -117,12 +117,11 @@ public class Context
                     if (!(cardUI.GetComponent<ThisCard>().thisCard is Weather)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"una carta de tipo {cardUI.GetComponent<ThisCard>().thisCard.Type} no puede colocarse en la zona de climas");
                     else
                     {
-                        newCardUI = GameObject.Instantiate(cardUI, location.position, Quaternion.identity);
-                        newCardUI.GetComponent<ThisCard>().PrintCard((Card)cardUI.GetComponent<ThisCard>().thisCard);
+                        newCardUI = CreateCard(new Vector3(0.8f, 0.8f, 0f), cardUI, location); 
                         switch (((Weather)cardUI.GetComponent<ThisCard>().thisCard).Skills[0].Name)
                         {
                             case "WeatherMelee":
-                                if(location.GetComponent<WeatherController>().weather[0])
+                                if (location.GetComponent<WeatherController>().weather[0])
                                 {
                                     Debug.Log("Clima M activo");
                                     return;
@@ -131,7 +130,7 @@ public class Context
                                 location.GetComponent<WeatherController>().weather[0] = true;
                                 location.GetComponent<WeatherController>().ApplyWeather("Frost"); break;
                             case "WeatherRanged":
-                                if(location.GetComponent<WeatherController>().weather[1])
+                                if (location.GetComponent<WeatherController>().weather[1])
                                 {
                                     Debug.Log("Clima R activo");
                                     return;
@@ -140,7 +139,7 @@ public class Context
                                 location.GetComponent<WeatherController>().weather[1] = true;
                                 location.GetComponent<WeatherController>().ApplyWeather("Fog"); break;
                             case "WeatherSiege":
-                                if(location.GetComponent<WeatherController>().weather[2])
+                                if (location.GetComponent<WeatherController>().weather[2])
                                 {
                                     Debug.Log("Clima S activo");
                                     return;
@@ -149,25 +148,18 @@ public class Context
                                 location.GetComponent<WeatherController>().weather[2] = true;
                                 location.GetComponent<WeatherController>().ApplyWeather("Rain"); break;
                         }
-                        newCardUI.transform.localScale = new Vector3(0.8f, 0.8f, 0f);
                         newCardUI.GetComponent<Drag>().enabled = false;
                     }
                     await Task.Delay(1000);
                     break;
                 case "Hand":
-                    newCardUI = GameObject.Instantiate(cardUI, location.position, Quaternion.identity);
-                    newCardUI.GetComponent<ThisCard>().PrintCard((Card)cardUI.GetComponent<ThisCard>().thisCard);
-                    newCardUI.transform.SetParent(location);
-                    newCardUI.transform.localScale = new Vector3(1f, 1f, 0f);
+                    newCardUI = CreateCard(new Vector3(1f, 1f, 0f), cardUI, location);
                     location.GetComponent<Hand>().CardsObject.Insert(0, cardUI);
                     location.GetComponent<Hand>().Cards.Insert(0, newCardUI.GetComponent<ThisCard>().thisCard);
                     await Task.Delay(1000);
                     break;
                 case "Graveyard":
-                    newCardUI = GameObject.Instantiate(cardUI, location.position, Quaternion.identity);
-                    newCardUI.GetComponent<ThisCard>().PrintCard((Card)cardUI.GetComponent<ThisCard>().thisCard);
-                    newCardUI.transform.SetParent(location);
-                    newCardUI.transform.localScale = new Vector3(0.9f, 0.9f, 0f);
+                    newCardUI = CreateCard(new Vector3(0.9f, 0.9f, 0f), cardUI, location);
                     location.GetComponent<Graveyard>().CardsObject.Insert(0, cardUI);
                     location.GetComponent<Graveyard>().Cards.Insert(0, newCardUI.GetComponent<ThisCard>().thisCard);
                     newCardUI.GetComponent<Drag>().enabled = false;
@@ -179,13 +171,10 @@ public class Context
                     location = location.gameObject.transform.Find(location.name + "Field").transform;
                     for (int i = 1; i < location.childCount; i++)
                     {
-                        if(location.GetChild(i).GetChild(2).childCount == 0)
+                        if (location.GetChild(i).GetChild(2).childCount == 0)
                         {
                             location = location.GetChild(i).GetChild(2).transform;
-                            newCardUI = GameObject.Instantiate(controller.CardPrefab, location.position, Quaternion.identity);
-                            newCardUI.GetComponent<ThisCard>().PrintCard(cardUI.GetComponent<ThisCard>().thisCard);
-                            newCardUI.transform.SetParent(location);
-                            newCardUI.transform.localScale = new Vector3(0.9f, 0.9f, 0);
+                            newCardUI = CreateCard(new Vector3(0.9f, 0.9f, 0), cardUI, location);
                             newCardUI.GetComponent<Drag>().enabled = false;
                             break;
                         }
@@ -196,12 +185,10 @@ public class Context
                     if (cardUI.GetComponent<ThisCard>().thisCard.Owner != location.parent.GetComponent<Player>().Id) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "no se puede colocar una carta propia en el campo rival o viceversa");
                     if (cardUI.GetComponent<ThisCard>().thisCard is UnitCard unitCard && !(cardUI.GetComponent<ThisCard>().thisCard is DecoyUnit))
                     {
+                        newCardUI = CreateCard(new Vector3(0.9f, 0.9f, 0), cardUI, location);
                         if (unitCard.AttackTypes.Contains(Global.AttackModes.Melee))
                         {
-                            newCardUI = GameObject.Instantiate(controller.CardPrefab, location.position, Quaternion.identity);
-                            newCardUI.GetComponent<ThisCard>().PrintCard(cardUI.GetComponent<ThisCard>().thisCard);
                             newCardUI.transform.SetParent(location.GetChild(1).GetChild(0));
-                            newCardUI.transform.localScale = new Vector3(0.9f, 0.9f, 0);
                             location.GetChild(1).GetComponentInChildren<Row>().InsertInRow(0, newCardUI);
                             newCardUI.GetComponent<Drag>().enabled = false;
                             controller.Effects(newCardUI);
@@ -212,10 +199,7 @@ public class Context
                         }
                         else if (unitCard.AttackTypes.Contains(Global.AttackModes.Ranged))
                         {
-                            newCardUI = GameObject.Instantiate(controller.CardPrefab, location.position, Quaternion.identity);
-                            newCardUI.GetComponent<ThisCard>().PrintCard(cardUI.GetComponent<ThisCard>().thisCard);
                             newCardUI.transform.SetParent(location.GetChild(2).GetChild(0));
-                            newCardUI.transform.localScale = new Vector3(0.9f, 0.9f, 0);
                             location.GetChild(2).GetComponentInChildren<Row>().InsertInRow(0, newCardUI);
                             cardUI.GetComponent<Drag>().enabled = false;
                             controller.Effects(newCardUI);
@@ -226,10 +210,7 @@ public class Context
                         }
                         else
                         {
-                            newCardUI = GameObject.Instantiate(controller.CardPrefab, location.position, Quaternion.identity);
-                            newCardUI.GetComponent<ThisCard>().PrintCard(cardUI.GetComponent<ThisCard>().thisCard);
                             newCardUI.transform.SetParent(location.GetChild(3).GetChild(0));
-                            newCardUI.transform.localScale = new Vector3(0.9f, 0.9f, 0);
                             location.GetChild(3).GetComponentInChildren<Row>().InsertInRow(0, newCardUI);
                             newCardUI.GetComponent<Drag>().enabled = false;
                             controller.Effects(newCardUI);
@@ -247,12 +228,10 @@ public class Context
                         Transform newLocation;
                         if (unit1.Owner == TriggerPlayer) newLocation = controller.currentTurn.transform.Find(controller.currentTurn.name + "Field").transform;
                         else newLocation = controller.notCurrentTurn.transform.Find(controller.notCurrentTurn.name + "Field").transform;
+                        newCardUI = CreateCard(new Vector3(0.9f, 0.9f, 0), cardUI, newLocation);
                         if (unit1.AttackTypes.Contains(Global.AttackModes.Melee))
                         {
-                            newCardUI = GameObject.Instantiate(controller.CardPrefab, newLocation.position, Quaternion.identity);
-                            newCardUI.GetComponent<ThisCard>().PrintCard(cardUI.GetComponent<ThisCard>().thisCard);
                             newCardUI.transform.SetParent(newLocation.GetChild(1).GetChild(0));
-                            newCardUI.transform.localScale = new Vector3(0.9f, 0.9f, 0);
                             newLocation.GetChild(1).GetComponentInChildren<Row>().InsertInRow(0, newCardUI);
                             newCardUI.GetComponent<Drag>().enabled = false;
                             controller.Effects(newCardUI);
@@ -263,10 +242,7 @@ public class Context
                         }
                         else if (unit1.AttackTypes.Contains(Global.AttackModes.Ranged))
                         {
-                            newCardUI = GameObject.Instantiate(controller.CardPrefab, newLocation.position, Quaternion.identity);
-                            newCardUI.GetComponent<ThisCard>().PrintCard(cardUI.GetComponent<ThisCard>().thisCard);
                             newCardUI.transform.SetParent(newLocation.GetChild(2).GetChild(0));
-                            newCardUI.transform.localScale = new Vector3(0.9f, 0.9f, 0);
                             newLocation.GetChild(2).GetComponentInChildren<Row>().InsertInRow(0, newCardUI);
                             newCardUI.GetComponent<Drag>().enabled = false;
                             controller.Effects(newCardUI);
@@ -277,10 +253,7 @@ public class Context
                         }
                         else
                         {
-                            newCardUI = GameObject.Instantiate(controller.CardPrefab, newLocation.position, Quaternion.identity);
-                            newCardUI.GetComponent<ThisCard>().PrintCard(cardUI.GetComponent<ThisCard>().thisCard);
                             newCardUI.transform.SetParent(newLocation.GetChild(3).GetChild(0));
-                            newCardUI.transform.localScale = new Vector3(0.9f, 0.9f, 0);
                             newLocation.GetChild(3).GetComponentInChildren<Row>().InsertInRow(0, newCardUI);
                             newCardUI.GetComponent<Drag>().enabled = false;
                             controller.Effects(newCardUI);
@@ -307,8 +280,8 @@ public class Context
     public void Push(object card, IList cards, Dictionary<IList, Transform> listingLocation) => AggCard(card, cards, listingLocation, 0);
     public void SendBottom(object card, IList cards, Dictionary<IList, Transform> listingLocation)
     {
-       if(cards.Count == 0) AggCard(card, cards, listingLocation, cards.Count);
-       else AggCard(card, cards, listingLocation, cards.Count - 1);
+        if (cards.Count == 0) AggCard(card, cards, listingLocation, cards.Count);
+        else AggCard(card, cards, listingLocation, cards.Count - 1);
     }
     async public void Remove(object card, IList cards, Dictionary<IList, Transform> listingLocation)
     {
@@ -336,7 +309,7 @@ public class Context
                             case "WeatherMelee":
                                 controller.ClearWeatherZone(0, 1); break;
                             case "WeatherRanged":
-                                controller.ClearWeatherZone(1,  2); break;
+                                controller.ClearWeatherZone(1, 2); break;
                             case "WeatherSiege":
                                 controller.ClearWeatherZone(2, 3); break;
                         }
@@ -447,6 +420,16 @@ public class Context
             return itemType.IsAssignableFrom(card.GetType());
         }
         return false;
+    }
+
+    private GameObject CreateCard(Vector3 scale, GameObject cardUI, Transform location)
+    {
+        GameObject newCardUI;
+        newCardUI = GameObject.Instantiate(cardUI, location.position, Quaternion.identity);
+        newCardUI.GetComponent<ThisCard>().PrintCard((Card)cardUI.GetComponent<ThisCard>().thisCard);
+        newCardUI.transform.SetParent(location);
+        newCardUI.transform.localScale = scale;
+        return newCardUI;
     }
 
 }
