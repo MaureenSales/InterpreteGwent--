@@ -1,4 +1,4 @@
-
+//intentar error hero
 effect
 {
     Name: "Damage",
@@ -207,6 +207,19 @@ effect
    }
 }
 
+effect
+{
+    Name: "PonerAumento",
+    Action: (targets, context) => {
+    for target in targets
+    {
+      boosts = context.BoosterCells;
+      boosts.Add(target);
+      context.Deck.Remove(target);
+    };
+   }
+}
+
 
       card {
       Type: "Plata",
@@ -218,13 +231,13 @@ effect
         {
         Effect: 
         {
-          Name: "PonerClima"
+          Name: "PonerAumento"
         },
         Selector: 
         {
           Source: "deck",
           Single: true,
-          Predicate: (unit) => unit.Type == "Clima"
+          Predicate: (unit) => unit.Type == "Aumento"
         }
         }
       ]

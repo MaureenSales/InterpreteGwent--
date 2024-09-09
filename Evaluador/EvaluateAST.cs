@@ -797,7 +797,7 @@ public class Evaluador : IVsitor<object?>
         List<GameObject> sources = new List<GameObject>();
         List<Card> cards = new List<Card>();
         (List<GameObject>, Transform) list;
-        switch (source)
+        switch (source) //reducir codigo rep
         {
             case "board":
                 Debug.Log("source: board");
@@ -823,6 +823,32 @@ public class Evaluador : IVsitor<object?>
                     var target = evaluate(predicate);
                     if (target != null) targets.Add(card);
                 }
+                ListingLocation[targets] = list.Item2;
+                break;
+            case "boosterCells":
+                Debug.Log("source: booster");
+                list = context.FilterOfCards(LocationCards.BoosterCells, context.TriggerPlayer);
+                sources = list.Item1;
+                Debug.Log(sources.Count);
+                foreach (var card in sources)
+                {
+                    VariableScopes.Peek()[name] = card;
+                    var target = evaluate(predicate);
+                    if (target != null) targets.Add(card);
+                }
+                ListingLocation[targets] = list.Item2;
+                break;
+            case "otherBoosterCells":
+                Debug.Log("source: otherBooster");
+                list = context.FilterOfCards(LocationCards.BoosterCells, context.OtherPlayer);
+                sources = list.Item1;
+                foreach (var card in sources)
+                {
+                    VariableScopes.Peek()[name] = card;
+                    var target = evaluate(predicate);
+                    if (target != null) targets.Add(card);
+                }
+                Debug.Log(targets.Count);
                 ListingLocation[targets] = list.Item2;
                 break;
             case "hand":
@@ -1105,13 +1131,13 @@ public class Evaluador : IVsitor<object?>
         if (property.PropertyAccess is VariableReference variable)
         {
             access = variable.Name;
-            if (!TokenTypeExtensions.Properties.Contains(access)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"{obj!.GetType()} no contiene una definicion para {access}");
+            //if (!TokenTypeExtensions.Properties.Contains(access)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"{obj!.GetType()} no contiene una definicion para {access}");
             access = variable.Name;
         }
         else if (property.PropertyAccess is CallMethod method)
         {
             access = method.MethodName.Lexeme;
-            if (!TokenTypeExtensions.Methods.ContainsKey(access)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"{obj!.GetType()} no contiene una definicion para {access}");
+            //if (!TokenTypeExtensions.Methods.ContainsKey(access)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"{obj!.GetType()} no contiene una definicion para {access}");
         }
     }
     private PropertyInfo PropertyIsValid(object obj, string access)

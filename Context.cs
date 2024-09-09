@@ -12,6 +12,7 @@ public class Context
     public string TriggerPlayer { get; private set; }
     public string OtherPlayer { get; private set; }
     public (List<GameObject>, Transform) Hand { get { return FilterOfCards(LocationCards.Hand, TriggerPlayer); } }
+    public (List<GameObject>, Transform) BoosterCells { get { return FilterOfCards(LocationCards.BoosterCells, TriggerPlayer);}}
     public (List<GameObject>, Transform) Field { get { return FilterOfCards(LocationCards.Field, TriggerPlayer); } }
     public (List<GameObject>, Transform) Graveyard { get { return FilterOfCards(LocationCards.Graveyard, TriggerPlayer); } }
     public (List<GameObject>, Transform) Board { get { return FilterOfCards(LocationCards.Board, TriggerPlayer); } }
@@ -68,14 +69,18 @@ public class Context
                     result = DemandedPlayer.MyField.AllCardsObjects;
                     location = DemandedPlayer.gameObject.transform.Find(DemandedPlayer.gameObject.name + "Field").transform;
                     break;
+                case LocationCards.BoosterCells:
+                    result = DemandedPlayer.MyBoosts.GetBoosts();
+                    location = DemandedPlayer.gameObject.transform;
+                    break;
             }
         }
         Debug.Log(result.Count);
-        List<GameObject> temp = new List<GameObject>();
-        foreach (var item in result)
-        {
-            if (!(item.GetComponent<ThisCard>().thisCard is HeroUnit) && !(item.GetComponent<ThisCard>().thisCard is DecoyUnit)) temp.Add(item);
-        }
+        // List<GameObject> temp = new List<GameObject>();
+        // foreach (var item in result) 
+        // {
+        //     if (!(item.GetComponent<ThisCard>().thisCard is HeroUnit) && !(item.GetComponent<ThisCard>().thisCard is DecoyUnit)) temp.Add(item);
+        // }
         Debug.Log(result.Count);
         return (result, location);
     }
@@ -145,6 +150,7 @@ public class Context
                                 location.GetComponent<WeatherController>().ApplyWeather("Rain"); break;
                         }
                         newCardUI.transform.localScale = new Vector3(0.8f, 0.8f, 0f);
+                        newCardUI.GetComponent<Drag>().enabled = false;
                     }
                     await Task.Delay(1000);
                     break;
@@ -165,6 +171,25 @@ public class Context
                     location.GetComponent<Graveyard>().CardsObject.Insert(0, cardUI);
                     location.GetComponent<Graveyard>().Cards.Insert(0, newCardUI.GetComponent<ThisCard>().thisCard);
                     newCardUI.GetComponent<Drag>().enabled = false;
+                    await Task.Delay(1000); break;
+                case "Enemy":
+                case "Player":
+                    if (cardUI.GetComponent<ThisCard>().thisCard.Owner != location.GetComponent<Player>().Id) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "no se puede colocar una carta propia en el campo rival o viceversa");
+                    if (!(cardUI.GetComponent<ThisCard>().thisCard is Boost)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"una carta de tipo {cardUI.GetComponent<ThisCard>().thisCard.Type} no puede colocarse en una celda de aumento");
+                    location = location.gameObject.transform.Find(location.name + "Field").transform;
+                    for (int i = 1; i < location.childCount; i++)
+                    {
+                        if(location.GetChild(i).GetChild(2).childCount == 0)
+                        {
+                            location = location.GetChild(i).GetChild(2).transform;
+                            newCardUI = GameObject.Instantiate(controller.CardPrefab, location.position, Quaternion.identity);
+                            newCardUI.GetComponent<ThisCard>().PrintCard(cardUI.GetComponent<ThisCard>().thisCard);
+                            newCardUI.transform.SetParent(location);
+                            newCardUI.transform.localScale = new Vector3(0.9f, 0.9f, 0);
+                            newCardUI.GetComponent<Drag>().enabled = false;
+                            break;
+                        }
+                    }
                     await Task.Delay(1000); break;
                 case "EnemyField":
                 case "PlayerField":
@@ -324,6 +349,9 @@ public class Context
                         location.GetComponent<Hand>().CardsObject.Remove(cardUI);
                         location.GetComponent<Hand>().Cards.Remove(cardUI.GetComponent<ThisCard>().thisCard);
                         await Task.Delay(1000); break;
+                    case "Enemy":
+                    case "Field":
+                        break;
                     case "EnemyField":
                     case "PlayerField":
                         if (!(cardUI.GetComponent<ThisCard>().thisCard is Unit unit1)) return;
@@ -431,5 +459,5 @@ public enum LocationCards
     Deck,
     Board,
     WeatherZone,
-    BoostCells,
+    BoosterCells,
 }
