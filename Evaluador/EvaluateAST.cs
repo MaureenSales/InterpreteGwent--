@@ -53,10 +53,7 @@ public class Evaluador : IVsitor<object?>
                 VariableScopes.Peek()[param.Key] = param.Value;
             }
         }
-        Debug.Log(action is null);
         VariableReference? param1 = action!.Parameters[0] as VariableReference;
-        Debug.Log(param1 is null);
-        Debug.Log(param1!.Name);
         VariableReference? param2 = action!.Parameters[1] as VariableReference;
         if (targets is null) VariableScopes.Peek()[param1!.Name] = new List<object>();
         else VariableScopes.Peek()[param1!.Name] = targets;
@@ -79,11 +76,11 @@ public class Evaluador : IVsitor<object?>
             case TokenType.Negation:
                 IsTruthy(right);
                 if (right is false) return true;
-                else return false;
+                return false;
             case TokenType.Increment:
             case TokenType.Decrement:
                 bool find = false;
-                if (expr.Right.GetType() != typeof(Property) && expr.Right.GetType() != typeof(VariableReference))
+                if (expr.Right.GetType() != typeof(Property) && expr.Right.GetType() != typeof(VariableReference) && expr.Right.GetType() != typeof(IndexList))
                 {
                     ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "El operando de un operador de incremento o decremento debe ser una variable, propiedad o indexador");
                 }
@@ -113,8 +110,9 @@ public class Evaluador : IVsitor<object?>
                 {
                     object? obj = evaluate(property.Object);
                     string access = "";
-                    PropertyIsValid(ref access, property, obj);
-
+                    PropertyName(ref access, property);
+                    PropertyInfo propertyInfo = PropertyIsValid(obj!, access);
+                    if (access != "Power") throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"el operador {expr.Op.Lexeme} solo se puede aplicar a valores numericos");
                     if (obj is Card card)
                     {
                         SetterPropertyIsPublic(obj, access);
@@ -324,9 +322,9 @@ public class Evaluador : IVsitor<object?>
         {
             object? obj = evaluate(property.Object);
             string access = "";
-            PropertyIsValid(ref access, property, obj);
-            if (!(value is double)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"no se puede convertir implicitamente el tipo {obj!.GetType()} en int");
-
+            PropertyName(ref access, property);
+            PropertyInfo propertyInfo = PropertyIsValid(obj!, access);
+            if (value.GetType() != propertyInfo.GetValue(obj!).GetType()) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"No se puede convertir implicitamente el tipo {value.GetType()} en {obj!.GetType()}");
             if (obj is Card card)
             {
                 SetterPropertyIsPublic(obj, access);
@@ -364,7 +362,7 @@ public class Evaluador : IVsitor<object?>
         object? obj = evaluate(property.Object);
 
         string access = "";
-        PropertyIsValid(ref access, property, obj);
+        PropertyName(ref access, property);
         if (obj is GameObject cardUI)
         {
             if (access != "Power") obj = cardUI.GetComponent<ThisCard>().thisCard;
@@ -397,7 +395,7 @@ public class Evaluador : IVsitor<object?>
             else if (access == "Power")
             {
                 Debug.Log(propertyInfo.GetValue(card).GetType().ToString());
-                double result = (double)(int)propertyInfo.GetValue(card);
+                double result = Convert.ToDouble(propertyInfo.GetValue(card));
                 return result;
             }
             return propertyInfo.GetValue(card);
@@ -537,8 +535,9 @@ public class Evaluador : IVsitor<object?>
         {
             object? obj = evaluate(property.Object);
             string access = "";
-            PropertyIsValid(ref access, property, obj);
-
+            PropertyName(ref access, property);
+            PropertyInfo propertyInfo = PropertyIsValid(obj!, access);
+            if (access != "Power") throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"el operador {expr.Op.Lexeme} solo se puede aplicar a valores numericos");
             if (obj is Card card)
             {
                 SetterPropertyIsPublic(obj, access);
@@ -552,7 +551,6 @@ public class Evaluador : IVsitor<object?>
                 SetterPropertyIsPublic(cardUI.GetComponent<ThisCard>().thisCard, access);
                 if (expr.Op.Type == TokenType.Increment) cardUI.GetComponent<ThisCard>().powerText.text = (int.Parse(cardUI.GetComponent<ThisCard>().powerText.text) + 1).ToString();
                 else cardUI.GetComponent<ThisCard>().powerText.text = (int.Parse(cardUI.GetComponent<ThisCard>().powerText.text) - 1).ToString();
-                //cardUI.transform.parent.parent.GetComponentInChildren<SumPower>().UpdatePower();
             }
             else if (obj is Context) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"el descriptor de acceso de la propiedad {access} es inaccesible");
             else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"{obj!.GetType()} no contiene un definicion para {access}");
@@ -625,8 +623,9 @@ public class Evaluador : IVsitor<object?>
         {
             object? obj = evaluate(property.Object);
             string access = "";
-            PropertyIsValid(ref access, property, obj);
-
+            PropertyName(ref access, property);
+            PropertyInfo propertyInfo = PropertyIsValid(obj!, access);
+            if (access != "Power") throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"el operador {expr.Op.Lexeme} solo se puede aplicar a valores numericos");
             if (obj is Card card)
             {
                 SetterPropertyIsPublic(obj, access);
@@ -663,7 +662,6 @@ public class Evaluador : IVsitor<object?>
                     case TokenType.ModuloAssignment:
                         cardUI.GetComponent<ThisCard>().powerText.text = (int.Parse(cardUI.GetComponent<ThisCard>().powerText.text) % (int)(double)num).ToString(); break;
                 }
-                //cardUI.transform.parent.parent.GetComponentInChildren<SumPower>().UpdatePower();
                 result = int.Parse(cardUI.GetComponent<ThisCard>().powerText.text);
             }
             else if (obj is Context) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"el descriptor de acceso de la propiedad {access} es inaccesible");
@@ -996,7 +994,6 @@ public class Evaluador : IVsitor<object?>
             skills.Add(new Skill(skill.Item1, skill.Item2.Item1, skill.Item2.Item2));
         }
         Card newCard = null!;
-        //lider
         switch (type)
         {
             case "Oro":
@@ -1055,9 +1052,9 @@ public class Evaluador : IVsitor<object?>
         }
         Debug.Log(CardDataBase.Decks.Count);
         if (Faction == Global.Factions.Neutral && newCard is UnitCard unitCard) CardDataBase.Neutral.Add(unitCard);
-        else if (Faction == Global.Factions.Neutral) CardDataBase.Specials.Add((SpecialCard)newCard);
+        else if (Faction == Global.Factions.Neutral && !(newCard is Leader)) CardDataBase.Specials.Add((SpecialCard)newCard);
 
-        foreach (var deck in CardDataBase.Decks.Values) deck.AddCard(newCard);
+        if (!(newCard is Leader)) foreach (var deck in CardDataBase.Decks.Values) deck.AddCard(newCard);
         return null;
     }
 
@@ -1067,23 +1064,22 @@ public class Evaluador : IVsitor<object?>
         int index = (int)(double)i;
         if (!(i is double)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "una lista se debe indexar mediante un valor entero");
         var List = evaluate(indexList.List);
-        if (!(List is IList)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"no se puede aplicar la indizacion a un tipo {List!.GetType()}");
+        if (!(List is IList list)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"no se puede aplicar la indizacion a un tipo {List!.GetType()}");
         else
         {
+            if (list.Count < index + 1) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "indexacion fuera de rango");
             return ((IList)List)[index];
         }
     }
 
-    private void PropertyIsValid(ref string access, Property property, object? obj)
+    private void PropertyName(ref string access, Property property)
     {
         if (property.PropertyAccess is VariableReference variable)
         {
-            //if (!TokenTypeExtensions.Properties.Contains(access)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"{obj!.GetType()} no contiene una definicion para {access}");
             access = variable.Name;
         }
         else if (property.PropertyAccess is CallMethod method)
         {
-            //if (!TokenTypeExtensions.Methods.ContainsKey(access)) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"{obj!.GetType()} no contiene una definicion para {access}");
             access = method.MethodName.Lexeme;
         }
     }
