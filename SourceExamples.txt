@@ -1,0 +1,165 @@
+#Example1
+effect
+{
+    Name: "PonerAumento",
+    Action: (targets, context) => {
+    for target in targets
+    {
+      boosts = context.BoosterCells;
+      boosts.Add(target);
+      context.Deck.Remove(target);
+    };
+   }
+}
+
+
+      card {
+      Type: "Plata",
+      Name: "SuperMau",
+      Faction: "Gryffindor",
+      Power: 6,
+      Range: [ "Melee"],
+      OnActivation: [
+        {
+        Effect: 
+        {
+          Name: "PonerAumento"
+        },
+        Selector: 
+        {
+          Source: "deck",
+          Single: true,
+          Predicate: (unit) => unit.Type == "Aumento"
+        }
+        }
+      ]
+      }
+
+#Example2
+effect
+{
+    Name: "TakeOutToHand",
+    Action: (targets, context) => {
+      target = context.Hand[0];
+      context.Hand.Remove(target);
+      field = context.Field;
+      field.Push(target);
+   }
+}
+
+      card {
+      Type: "Lider",
+      Name: "LeaderRavenclaw",
+      Faction: "Ravenclaw",
+      Power: 7,
+      Range: [ "Melee"],
+      OnActivation: [
+        {
+        Effect: "TakeOutToHand"
+        }
+      ]
+      }
+
+#Example3
+effect
+{
+    Name: "RenaceElMonstruo",
+    Action: (targets, context) => {
+      seleccionadas = context.Graveyard.Find((unit) => unit.Power == 3);
+      board = context.Board;
+      for target in seleccionadas
+      {
+        context.Graveyard.Remove(target);
+        board.Push(target);
+      };
+   }
+}
+#Example4
+
+effect
+{
+    Name: "ReturnToDeck",
+    Action: (targets, context) => {
+    for target in targets
+    {
+      owner = target.Owner;
+      deck = context.DeckOfPlayer(owner);
+      deck.Push(target);
+      deck.Shuffle();
+      context.Board.Remove(target);
+    };
+   }
+}
+
+card {
+      Type: "Plata",
+      Name: "SuperJenn",
+      Faction: "Slytherin",
+      Power: 10,
+      Range: [ "Melee"],
+      OnActivation: [
+ {
+   Effect: {
+           Name: "Damage",
+           Amount: 1
+           },
+   Selector: {
+             Source: "board",
+             Single: false,
+             Predicate:
+             (unit) => unit.Faction == "Gryffindor"
+             },
+   PostAction: {
+        
+   Effect: {
+           Name: "ReturnToDeck"
+           },
+   Selector: {
+             Source: "parent",
+             Single: false,
+             Predicate:
+             (unit) => unit.Name == "Arthur Weasley"
+             }
+            
+   }
+ }
+            ]
+      }
+
+#Example5
+effect
+{
+    Name: "Damage",
+    Action: (targets, context) => {
+    for target in targets
+    {
+      target.Power -= Amount;
+    };
+   },
+    Params:
+    {
+        Amount: Number
+    }
+}
+
+      card {
+      Type: "Plata",
+      Name: "Melissa",
+      Faction: "Gryffindor",
+      Power: 10,
+      Range: [ "Melee"],
+      OnActivation: [
+ {
+   Effect: {
+           Name: "Damage",
+           Amount: 1,
+           },
+   Selector: {
+             Source: "field",
+             Single: false,
+             Predicate:
+             (unit) => unit.Faction == "Gryffindor"
+             },
+ }
+            ]
+      }

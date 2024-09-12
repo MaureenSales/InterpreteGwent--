@@ -93,9 +93,8 @@ public class Context
             if (card is GameObject cardUi)
             {
                 Card newCard = cardUi.GetComponent<ThisCard>().thisCard;
-                if (newCard.Owner == TriggerPlayer) controller.currentTurn.GetComponent<Player>().MyDeck.cards.Insert(0, newCard);
-                else controller.notCurrentTurn.GetComponent<Player>().MyDeck.cards.Insert(0, newCard);
-                cards.Insert(index, newCard);
+                if (newCard.Owner == TriggerPlayer) controller.currentTurn.GetComponent<Player>().MyDeck.cards.Insert(index, newCard);
+                else controller.notCurrentTurn.GetComponent<Player>().MyDeck.cards.Insert(index, newCard);
                 return;
             }
             else
@@ -154,14 +153,14 @@ public class Context
                     break;
                 case "Hand":
                     newCardUI = CreateCard(new Vector3(1f, 1f, 0f), cardUI, location);
-                    location.GetComponent<Hand>().CardsObject.Insert(0, cardUI);
-                    location.GetComponent<Hand>().Cards.Insert(0, newCardUI.GetComponent<ThisCard>().thisCard);
+                    location.GetComponent<Hand>().CardsObject.Insert(index, cardUI);
+                    location.GetComponent<Hand>().Cards.Insert(index, newCardUI.GetComponent<ThisCard>().thisCard);
                     await Task.Delay(1000);
                     break;
                 case "Graveyard":
                     newCardUI = CreateCard(new Vector3(0.9f, 0.9f, 0f), cardUI, location);
-                    location.GetComponent<Graveyard>().CardsObject.Insert(0, cardUI);
-                    location.GetComponent<Graveyard>().Cards.Insert(0, newCardUI.GetComponent<ThisCard>().thisCard);
+                    location.GetComponent<Graveyard>().CardsObject.Insert(index, cardUI);
+                    location.GetComponent<Graveyard>().Cards.Insert(index, newCardUI.GetComponent<ThisCard>().thisCard);
                     newCardUI.GetComponent<Drag>().enabled = false;
                     await Task.Delay(1000); break;
                 case "Enemy":
@@ -189,7 +188,7 @@ public class Context
                         if (unitCard.AttackTypes.Contains(Global.AttackModes.Melee))
                         {
                             newCardUI.transform.SetParent(location.GetChild(1).GetChild(0));
-                            location.GetChild(1).GetComponentInChildren<Row>().InsertInRow(0, newCardUI);
+                            location.GetChild(1).GetComponentInChildren<Row>().InsertInRow(index, newCardUI);
                             newCardUI.GetComponent<Drag>().enabled = false;
                             controller.Effects(newCardUI);
                             if (!(unitCard is HeroUnit))
@@ -200,7 +199,7 @@ public class Context
                         else if (unitCard.AttackTypes.Contains(Global.AttackModes.Ranged))
                         {
                             newCardUI.transform.SetParent(location.GetChild(2).GetChild(0));
-                            location.GetChild(2).GetComponentInChildren<Row>().InsertInRow(0, newCardUI);
+                            location.GetChild(2).GetComponentInChildren<Row>().InsertInRow(index, newCardUI);
                             cardUI.GetComponent<Drag>().enabled = false;
                             controller.Effects(newCardUI);
                             if (!(unitCard is HeroUnit))
@@ -211,7 +210,7 @@ public class Context
                         else
                         {
                             newCardUI.transform.SetParent(location.GetChild(3).GetChild(0));
-                            location.GetChild(3).GetComponentInChildren<Row>().InsertInRow(0, newCardUI);
+                            location.GetChild(3).GetComponentInChildren<Row>().InsertInRow(index, newCardUI);
                             newCardUI.GetComponent<Drag>().enabled = false;
                             controller.Effects(newCardUI);
                             if (!(unitCard is HeroUnit))
@@ -232,7 +231,7 @@ public class Context
                         if (unit1.AttackTypes.Contains(Global.AttackModes.Melee))
                         {
                             newCardUI.transform.SetParent(newLocation.GetChild(1).GetChild(0));
-                            newLocation.GetChild(1).GetComponentInChildren<Row>().InsertInRow(0, newCardUI);
+                            newLocation.GetChild(1).GetComponentInChildren<Row>().InsertInRow(index, newCardUI);
                             newCardUI.GetComponent<Drag>().enabled = false;
                             controller.Effects(newCardUI);
                             if (!(unit1 is HeroUnit))
@@ -243,7 +242,7 @@ public class Context
                         else if (unit1.AttackTypes.Contains(Global.AttackModes.Ranged))
                         {
                             newCardUI.transform.SetParent(newLocation.GetChild(2).GetChild(0));
-                            newLocation.GetChild(2).GetComponentInChildren<Row>().InsertInRow(0, newCardUI);
+                            newLocation.GetChild(2).GetComponentInChildren<Row>().InsertInRow(index, newCardUI);
                             newCardUI.GetComponent<Drag>().enabled = false;
                             controller.Effects(newCardUI);
                             if (!(unit1 is HeroUnit))
@@ -254,7 +253,7 @@ public class Context
                         else
                         {
                             newCardUI.transform.SetParent(newLocation.GetChild(3).GetChild(0));
-                            newLocation.GetChild(3).GetComponentInChildren<Row>().InsertInRow(0, newCardUI);
+                            newLocation.GetChild(3).GetComponentInChildren<Row>().InsertInRow(index, newCardUI);
                             newCardUI.GetComponent<Drag>().enabled = false;
                             controller.Effects(newCardUI);
                             if (!(unit1 is HeroUnit))
@@ -266,13 +265,11 @@ public class Context
                     else throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"una carta de tipo {cardUI.GetComponent<ThisCard>().thisCard.Type} no puede colocarse en una fila");
                     await Task.Delay(1000); break;
             }
-            cards.Insert(index, card);
         }
         else
         {
             if (cards.Contains(card)) return;
-            location.GetComponent<Player>().MyDeck.cards.Insert(0, (Card)card);
-            cards.Insert(index, card);
+            location.GetComponent<Player>().MyDeck.cards.Insert(index, (Card)card);
         }
         await Task.Delay(1000);
     }
@@ -372,10 +369,9 @@ public class Context
             else
             {
                 Debug.Log("removeDelDeck");
-                location.GetComponent<Player>().MyDeck.cards.Remove((Card)card);
+                location.GetComponent<Player>().MyDeck.RemoveCard((Card)card);
             }
         }
-        cards.Remove(card);
     }
 
     private void MoveGraveyard(GameObject cardUI)

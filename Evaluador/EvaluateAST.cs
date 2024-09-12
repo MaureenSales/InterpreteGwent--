@@ -111,7 +111,6 @@ public class Evaluador : IVsitor<object?>
                     object? obj = evaluate(property.Object);
                     string access = "";
                     PropertyName(ref access, property);
-                    PropertyInfo propertyInfo = PropertyIsValid(obj!, access);
                     if (access != "Power") throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"el operador {expr.Op.Lexeme} solo se puede aplicar a valores numericos");
                     if (obj is Card card)
                     {
@@ -323,16 +322,18 @@ public class Evaluador : IVsitor<object?>
             object? obj = evaluate(property.Object);
             string access = "";
             PropertyName(ref access, property);
-            PropertyInfo propertyInfo = PropertyIsValid(obj!, access);
-            if (value.GetType() != propertyInfo.GetValue(obj!).GetType()) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"No se puede convertir implicitamente el tipo {value.GetType()} en {obj!.GetType()}");
             if (obj is Card card)
             {
+                PropertyInfo propertyInfo = PropertyIsValid(obj!, access);
+                if (value.GetType() != propertyInfo.GetValue(obj!).GetType()) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"No se puede convertir implicitamente el tipo {value.GetType()} en {obj!.GetType()}");
                 SetterPropertyIsPublic(obj, access);
                 Unit unit = (Unit)card;
                 unit.Power = (int)(double)value;
             }
             else if (obj is GameObject cardUI)
             {
+                PropertyInfo propertyInfo = PropertyIsValid(cardUI.GetComponent<ThisCard>().thisCard, access);
+                if (value.GetType() != propertyInfo.GetValue(cardUI.GetComponent<ThisCard>().thisCard).GetType()) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"No se puede convertir implicitamente el tipo {value.GetType()} en {obj!.GetType()}");
                 SetterPropertyIsPublic(cardUI.GetComponent<ThisCard>().thisCard, access);
                 cardUI.GetComponent<ThisCard>().powerText.text = value.ToString();
             }
@@ -536,7 +537,6 @@ public class Evaluador : IVsitor<object?>
             object? obj = evaluate(property.Object);
             string access = "";
             PropertyName(ref access, property);
-            PropertyInfo propertyInfo = PropertyIsValid(obj!, access);
             if (access != "Power") throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"el operador {expr.Op.Lexeme} solo se puede aplicar a valores numericos");
             if (obj is Card card)
             {
@@ -624,7 +624,6 @@ public class Evaluador : IVsitor<object?>
             object? obj = evaluate(property.Object);
             string access = "";
             PropertyName(ref access, property);
-            PropertyInfo propertyInfo = PropertyIsValid(obj!, access);
             if (access != "Power") throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, $"el operador {expr.Op.Lexeme} solo se puede aplicar a valores numericos");
             if (obj is Card card)
             {
