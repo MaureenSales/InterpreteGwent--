@@ -65,7 +65,7 @@ effect
 {
     Name: "RenaceElMonstruo",
     Action: (targets, context) => {
-      seleccionadas = context.Graveyard.Find((unit) => unit.Power == 3);
+      seleccionadas = context.Graveyard.Find((unit) => unit.Power == 6);
       board = context.Board;
       for target in seleccionadas
       {
@@ -74,8 +74,35 @@ effect
       };
    }
 }
-#Example4
+card {
+      Type: "Plata",
+      Name: "SuperMau",
+      Faction: "Gryffindor",
+      Power: 6,
+      Range: [ "Melee"],
+      OnActivation: [
+        {
+        Effect: "RenaceElMonstruo"
+        
+        }
+      ]
+      }
 
+#Example4
+effect
+{
+    Name: "Damage",
+    Action: (targets, context) => {
+    for target in targets
+    {
+      target.Power -= Amount;
+    };
+   },
+    Params:
+    {
+        Amount: Number
+    }
+}
 effect
 {
     Name: "ReturnToDeck",
@@ -126,40 +153,4 @@ card {
             ]
       }
 
-#Example5
-effect
-{
-    Name: "Damage",
-    Action: (targets, context) => {
-    for target in targets
-    {
-      target.Power -= Amount;
-    };
-   },
-    Params:
-    {
-        Amount: Number
-    }
-}
 
-      card {
-      Type: "Plata",
-      Name: "Melissa",
-      Faction: "Gryffindor",
-      Power: 10,
-      Range: [ "Melee"],
-      OnActivation: [
- {
-   Effect: {
-           Name: "Damage",
-           Amount: 1,
-           },
-   Selector: {
-             Source: "field",
-             Single: false,
-             Predicate:
-             (unit) => unit.Faction == "Gryffindor"
-             },
- }
-            ]
-      }

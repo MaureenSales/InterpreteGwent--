@@ -447,7 +447,7 @@ public class Parser : MonoBehaviour
         Consume(ErrorExceptions.ErrorType.SYNTACTIC, TokenType.ClParenthesis, "')' is expected after declaration of parameter of a predicate expression");
         Consume(ErrorExceptions.ErrorType.SYNTACTIC, TokenType.Imply, "'=>' is expected before declaration of the body of a predicate expression");
         ASTnode body = Assignment();
-        if ((Match(TokenType.Comma) && PeekNext().Type != TokenType.ClBraces) || !Match(TokenType.ClBraces, TokenType.Comma)) Consume(ErrorExceptions.ErrorType.SYNTACTIC, TokenType.Comma, "',' is expected after value of a field");
+        if ((Match(TokenType.Comma) && PeekNext().Type != TokenType.ClBraces) || !Match(TokenType.ClBraces, TokenType.Comma, TokenType.ClParenthesis)) Consume(ErrorExceptions.ErrorType.SYNTACTIC, TokenType.Comma, "',' is expected after value of a field");
         return new PredicateLambda(parameter, body);
     }
 
