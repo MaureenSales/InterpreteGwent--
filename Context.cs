@@ -181,9 +181,11 @@ public class Context
                     await Task.Delay(1000); break;
                 case "EnemyField":
                 case "PlayerField":
+                    Debug.Log("correcto");
                     if (cardUI.GetComponent<ThisCard>().thisCard.Owner != location.parent.GetComponent<Player>().Id) throw ErrorExceptions.Error(ErrorExceptions.ErrorType.SEMANTIC, "no se puede colocar una carta propia en el campo rival o viceversa");
                     if (cardUI.GetComponent<ThisCard>().thisCard is UnitCard unitCard && !(cardUI.GetComponent<ThisCard>().thisCard is DecoyUnit))
                     {
+                        Debug.Log("here");
                         newCardUI = CreateCard(new Vector3(0.9f, 0.9f, 0), cardUI, location);
                         if (unitCard.AttackTypes.Contains(Global.AttackModes.Melee))
                         {
